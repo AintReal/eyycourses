@@ -2,7 +2,7 @@ import { UserAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTranslation } from '../../node_modules/react-i18next';
 import { supabase } from '../supabaseClient';
@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     checkBanStatus();
@@ -153,20 +154,46 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-zinc-900 flex">
+      {/* Hamburger Button - Only on mobile */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="md:hidden fixed top-4 ltr:left-4 rtl:right-4 z-50 bg-zinc-800 text-white p-3 rounded-lg border border-zinc-700"
+      >
+        <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} />
+      </button>
+
       {/* Language Switcher - Top Right */}
-      <div className="fixed top-6 ltr:right-6 rtl:left-6 z-50">
+      <div className="fixed top-4 ltr:right-4 rtl:left-4 z-50">
         <LanguageSwitcher />
       </div>
       
-      {/* Sidebar - 20% */}
-      <div className="w-[20%] bg-zinc-800 border-r border-zinc-700 p-4">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar - Always visible on desktop (md+), sliding on mobile */}
+      <div className={`
+        w-70 md:w-[20%]
+        bg-zinc-800 border-r border-zinc-700 p-4
+        fixed md:relative
+        h-screen md:h-auto
+        overflow-y-auto
+        top-0 bottom-0
+        z-40
+        transition-transform duration-300 md:transition-none
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="mb-8">
           <h2 className="text-white text-xl font-bold mb-1">eyycourses</h2>
           <p className="text-zinc-400 text-sm">{session?.user?.email}</p>
         </div>
 
         {/* Course Navigation */}
-        <nav className="space-y-2">
+        <nav className="space-y-2 mb-4">
           {courses.map(course => (
             <div key={course.id} className="bg-zinc-900/50 rounded-lg border border-zinc-700">
               <button
@@ -197,7 +224,10 @@ const Dashboard = () => {
                   {courseLessons[course.id].map(lesson => (
                     <button
                       key={lesson.id}
-                      onClick={() => selectLesson(lesson)}
+                      onClick={() => {
+                        selectLesson(lesson);
+                        setIsMobileMenuOpen(false);
+                      }}
                       className={`w-full text-left px-4 py-2 rounded transition-colors ${
                         selectedLesson?.id === lesson.id
                           ? 'bg-blue-600 text-white'
@@ -213,21 +243,23 @@ const Dashboard = () => {
           ))}
         </nav>
 
-        {/* Sign Out Button */}
-        <button
-          onClick={handleSignOut}
-          className="mt-8 w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
-        >
-          {t('signout')}
-        </button>
+        {/* Sign Out Button - Sticky at bottom on mobile */}
+        <div className="sticky bottom-0 bg-zinc-800 pt-4 pb-2 -mx-4 px-4">
+          <button
+            onClick={handleSignOut}
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+          >
+            {t('signout')}
+          </button>
+        </div>
       </div>
 
-      {/* Main Content - 80% */}
-      <div className="w-[80%] p-8">
+      {/* Main Content - Full width on mobile, 80% on desktop */}
+      <div className="flex-1 md:w-[80%] p-4 md:p-8 pt-16 md:pt-8">
         <div className="max-w-4xl mx-auto">
           {selectedLesson ? (
             <div>
-              <h1 className="text-4xl font-bold text-white mb-6">
+              <h1 className="text-2xl md:text-4xl font-bold text-white mb-4 md:mb-6">
                 {getLessonTitle(selectedLesson)}
               </h1>
               
