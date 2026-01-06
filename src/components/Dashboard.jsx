@@ -133,7 +133,10 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-zinc-900 flex">
-      <LanguageSwitcher />
+      {/* Language Switcher - Top Right */}
+      <div className="fixed top-6 ltr:right-6 rtl:left-6 z-50">
+        <LanguageSwitcher />
+      </div>
       
       {/* Sidebar - 20% */}
       <div className="w-[20%] bg-zinc-800 border-r border-zinc-700 p-4">
