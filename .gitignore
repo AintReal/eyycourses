@@ -21,6 +21,7 @@ make_admin.sql
 secure_rls_policies.sql
 setup_admin_auth.sql
 setup_courses.sql
+ADD_BAN_COLUMN.sql
 
 
 codes.txt

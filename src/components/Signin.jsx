@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,6 +11,7 @@ import { useTranslation } from '../../node_modules/react-i18next';
 
 const Signin = () => {
 const { t } = useTranslation();
+const location = useLocation();
 
 const [email, setEmail] = useState("")
 const [password, setPassword] = useState("")
@@ -26,6 +27,15 @@ const [lockoutTime, setLockoutTime] = useState(null)
 
 const {session, signInUser, signInWithGoogle, validateAccessCode} = UserAuth()
 const navigate = useNavigate()
+
+// Check for ban error from navigation state
+useEffect(() => {
+  if (location.state?.error) {
+    setError(location.state.error);
+    // Clear the state
+    navigate(location.pathname, { replace: true, state: {} });
+  }
+}, [location.state]);
 
 // Handle email verification redirect
 useEffect(() => {

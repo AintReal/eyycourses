@@ -57,6 +57,27 @@ export const AuthContextProvider = ({children}) => {
                 console.error("an error occured: ", error)
                 return {success: false, error: error.message}
             }
+            
+            // Check if user is banned
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('is_banned')
+                .eq('id', data.user.id)
+                .single();
+            
+            if (userError) {
+                console.error("Error checking ban status:", userError);
+            }
+            
+            if (userData?.is_banned) {
+                // Sign out immediately if banned
+                await supabase.auth.signOut();
+                return {
+                    success: false, 
+                    error: 'You have been banned from this platform. Please contact support.'
+                };
+            }
+            
             console.log('signing in, success!', data);
             return {success: true, data}
         } catch(error){

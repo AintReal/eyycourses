@@ -20,8 +20,28 @@ const Dashboard = () => {
   const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
+    checkBanStatus();
     fetchCourses();
   }, []);
+
+  const checkBanStatus = async () => {
+    if (session?.user?.id) {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('is_banned')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (userData?.is_banned) {
+        await signOut();
+        navigate('/signin', { 
+          state: { 
+            error: 'You have been banned from this platform. Please contact support.' 
+          } 
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     const generateVideoUrl = async () => {

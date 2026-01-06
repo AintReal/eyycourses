@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faPlus, faEdit, faTrash, faVideo, faTimes, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faPlus, faEdit, faTrash, faVideo, faTimes, faSpinner, faChartBar, faBan } from '@fortawesome/free-solid-svg-icons';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
+import Analytics from './Analytics';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -13,7 +14,7 @@ const AdminDashboard = () => {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('courses');
+  const [activeTab, setActiveTab] = useState('analytics');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
@@ -42,6 +43,7 @@ const AdminDashboard = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedVideoFile, setSelectedVideoFile] = useState(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     checkAdminAuth();
@@ -157,6 +159,56 @@ const AdminDashboard = () => {
       fetchData();
       setToast({ message: `${count} new codes generated!`, type: 'success' });
     }
+  };
+
+  const deleteUser = async (userId, userEmail) => {
+    setConfirmDialog({
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${userEmail}? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          // Delete from public.users table
+          const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userId);
+          
+          if (error) throw error;
+          
+          setToast({ message: 'User deleted successfully!', type: 'success' });
+          await fetchData();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          setToast({ message: 'Error deleting user: ' + error.message, type: 'error' });
+        }
+        setConfirmDialog(null);
+      }
+    });
+  };
+
+  const banUser = async (userId, userEmail, currentBanStatus) => {
+    const action = currentBanStatus ? 'unban' : 'ban';
+    setConfirmDialog({
+      title: `${action === 'ban' ? 'Ban' : 'Unban'} User`,
+      message: `Are you sure you want to ${action} ${userEmail}?`,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('users')
+            .update({ is_banned: !currentBanStatus })
+            .eq('id', userId);
+          
+          if (error) throw error;
+          
+          setToast({ message: `User ${action}ned successfully!`, type: 'success' });
+          await fetchData();
+        } catch (error) {
+          console.error(`Error ${action}ning user:`, error);
+          setToast({ message: `Error ${action}ning user: ` + error.message, type: 'error' });
+        }
+        setConfirmDialog(null);
+      }
+    });
   };
 
   const toggleCourseStatus = async (course) => {
@@ -424,6 +476,15 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-4">
             <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
+                activeTab === 'analytics' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <FontAwesomeIcon icon={faChartBar} />
+              Analytics
+            </button>
+            <button
               onClick={() => setActiveTab('courses')}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
                 activeTab === 'courses' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -456,6 +517,11 @@ const AdminDashboard = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <Analytics />
+        )}
+
         {/* Courses Tab */}
         {activeTab === 'courses' && !selectedCourse && (
           <div>
@@ -585,7 +651,16 @@ const AdminDashboard = () => {
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Registered Users</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Registered Users</h2>
+              <input
+                type="text"
+                placeholder="Search by #, email, or name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-600 w-80"
+              />
+            </div>
             <div className="bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
               <table className="w-full">
                 <thead className="bg-zinc-900">
@@ -595,11 +670,23 @@ const AdminDashboard = () => {
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Name</th>
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Created</th>
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Code Validated</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
-                    <tr key={user.id} className="border-t border-zinc-700">
+                  {users
+                    .filter((user) => {
+                      if (!searchQuery) return true;
+                      const query = searchQuery.toLowerCase();
+                      return (
+                        user.userNumber.toString().includes(query) ||
+                        user.email.toLowerCase().includes(query) ||
+                        (user.full_name && user.full_name.toLowerCase().includes(query))
+                      );
+                    })
+                    .map((user) => (
+                    <tr key={user.id} className={`border-t border-zinc-700 ${user.is_banned ? 'bg-red-900/10' : ''}`}>
                       <td className="px-4 py-3 text-gray-400 font-mono">#{user.userNumber}</td>
                       <td className="px-4 py-3">{user.email}</td>
                       <td className="px-4 py-3">{user.full_name || '-'}</td>
@@ -610,6 +697,31 @@ const AdminDashboard = () => {
                         ) : (
                           <FontAwesomeIcon icon={faTimesCircle} className="text-red-500" />
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {user.is_banned ? (
+                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded text-xs border border-red-800">Banned</span>
+                        ) : (
+                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs border border-green-800">Active</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => banUser(user.id, user.email, user.is_banned)}
+                            className={`${user.is_banned ? 'text-green-500 hover:text-green-400' : 'text-zinc-400 hover:text-zinc-300'} transition`}
+                            title={user.is_banned ? 'Unban user' : 'Ban user'}
+                          >
+                            <FontAwesomeIcon icon={faBan} />
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id, user.email)}
+                            className="text-zinc-400 hover:text-zinc-300 transition"
+                            title="Delete user"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
