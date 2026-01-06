@@ -5,7 +5,6 @@ const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    // Set document direction and lang attribute
     document.documentElement.lang = i18n.language;
     document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
     document.body.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';

@@ -14,7 +14,6 @@ const AccessCodeModal = ({ onValidate, onSuccess }) => {
     setLoading(true);
     setError('');
 
-    // Validate code format (8 characters)
     if (code.length !== 8) {
       setError('Access code must be exactly 8 characters');
       setLoading(false);

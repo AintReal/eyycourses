@@ -11,7 +11,6 @@ class ErrorBoundary extends Component {
     return { hasError: true, error };
   }
 
-  // Log errors for debugging (can integrate with error tracking services like Sentry)
   componentDidCatch(error, errorInfo) {
     console.error('Error Boundary caught:', error, errorInfo);
   }

@@ -15,9 +15,7 @@ const AdminLogin = () => {
     setLoading(true);
     setError('');
 
-    // Check credentials
     if (username === 'admin' && password === import.meta.env.VITE_ADMIN_PASS) {
-      // Store admin session in sessionStorage
       sessionStorage.setItem('adminAuth', 'true');
       navigate('/admin/dashboard');
     } else {

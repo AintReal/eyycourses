@@ -23,7 +23,6 @@ const AdminDashboard = () => {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const navigate = useNavigate();
 
-  // Form states
   const [courseForm, setCourseForm] = useState({
     title_en: '',
     title_ar: '',
@@ -48,7 +47,6 @@ const AdminDashboard = () => {
     checkAdminAuth();
   }, [navigate]);
 
-  // Generate signed URL for video preview
   useEffect(() => {
     const generatePreviewUrl = async () => {
       if (!lessonForm.video_url) {
@@ -56,7 +54,6 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Check if it's a storage path
       if (lessonForm.video_url.startsWith('lesson-videos/')) {
         try {
           const filePath = lessonForm.video_url.replace('lesson-videos/', '');
@@ -71,7 +68,6 @@ const AdminDashboard = () => {
           setPreviewVideoUrl(null);
         }
       } else {
-        // External URL - use as is
         setPreviewVideoUrl(lessonForm.video_url);
       }
     };
@@ -87,6 +83,7 @@ const AdminDashboard = () => {
       return;
     }
     
+    // Verify admin privileges
     const isAdmin = session.user.user_metadata?.is_admin === true;
     if (!isAdmin) {
       setToast({ message: 'Access denied. Admin privileges required.', type: 'error' });
@@ -101,18 +98,15 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch users
     const { data: usersData } = await supabase.auth.admin.listUsers();
     if (usersData) setUsers(usersData.users);
 
-    // Fetch access codes
     const { data: codesData } = await supabase
       .from('access_codes')
       .select('*')
       .order('created_at', { ascending: false });
     if (codesData) setAccessCodes(codesData);
 
-    // Fetch courses
     const { data: coursesData } = await supabase
       .from('courses')
       .select('*')
@@ -169,7 +163,6 @@ const AdminDashboard = () => {
   };
 
   const saveCourse = async () => {
-    // Validate form
     if (!courseForm.title_en.trim() || !courseForm.title_ar.trim()) {
       setToast({ message: 'Please fill in both English and Arabic titles', type: 'error' });
       return;
@@ -250,30 +243,27 @@ const AdminDashboard = () => {
     setShowLessonModal(true);
   };
 
-  // Upload video to Supabase Storage
   const uploadVideoToStorage = async (file) => {
     try {
       setUploadingVideo(true);
       setUploadProgress(0);
 
-      // Validate file type
       const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Invalid file type. Please upload MP4, WebM, MOV, or AVI files.');
       }
 
-      // Validate file size (max 500MB)
+      // Max 500MB to prevent storage abuse
       const maxSize = 500 * 1024 * 1024; // 500MB in bytes
       if (file.size > maxSize) {
         throw new Error('File too large. Maximum size is 500MB.');
       }
 
-      // Generate unique filename with timestamp
+      // Unique filename with timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `lessons/${fileName}`;
 
-      // Upload file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('lesson-videos')
         .upload(filePath, file, {
@@ -283,8 +273,7 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      // Store the file path (not public URL) for private bucket
-      // We'll generate signed URLs when needed
+      // Store path (not public URL) - signed URLs generated on-demand
       const storagePath = `lesson-videos/${filePath}`;
 
       setUploadProgress(100);
@@ -297,7 +286,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle video file selection
   const handleVideoFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -315,7 +303,6 @@ const AdminDashboard = () => {
   };
 
   const saveLesson = async () => {
-    // Validate form
     if (!lessonForm.title_en.trim() || !lessonForm.title_ar.trim()) {
       setToast({ message: 'Please fill in both English and Arabic titles', type: 'error' });
       return;
@@ -365,24 +352,19 @@ const AdminDashboard = () => {
       message: 'Are you sure you want to delete this lesson?',
       onConfirm: async () => {
         try {
-          // Get the lesson to check if it has an uploaded video
           const lesson = lessons.find(l => l.id === id);
           
-          // Delete the lesson from database
           const { error } = await supabase.from('lessons').delete().eq('id', id);
           if (error) throw error;
 
-          // If the lesson had a video from our storage, delete it
           if (lesson?.video_url && lesson.video_url.startsWith('lesson-videos/')) {
             try {
-              // Extract file path (it's already in format: lesson-videos/lessons/filename.ext)
               const filePath = lesson.video_url.replace('lesson-videos/', '');
               await supabase.storage
                 .from('lesson-videos')
                 .remove([filePath]);
             } catch (storageError) {
               console.error('Error deleting video from storage:', storageError);
-              // Don't throw - lesson is already deleted from DB
             }
           }
 
@@ -852,7 +834,6 @@ const AdminDashboard = () => {
                           controls 
                           className="w-full max-h-48"
                           onError={(e) => {
-                            // If video fails to load, show path instead
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'block';
                           }}

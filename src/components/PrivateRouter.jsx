@@ -9,7 +9,6 @@ const PrivateRouter = ({children}) => {
         return <p>Loading...</p>
     }
 
-    // Check if user has validated their access code
     const codeValidated = session?.user?.user_metadata?.code_validated;
     
     if (session && !codeValidated) {

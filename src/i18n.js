@@ -4,7 +4,6 @@ import { initReactI18next } from '../node_modules/react-i18next';
 const resources = {
   en: {
     translation: {
-      // Auth
       "signin": "Sign In",
       "signup": "Sign Up",
       "signout": "Sign Out",
@@ -17,41 +16,34 @@ const resources = {
       "welcome": "Welcome to eyycourses",
       "selectLesson": "Select a lesson from the sidebar to get started",
       
-      // Dashboard
       "dashboard": "Dashboard",
       "comingSoon": "Soon",
       
-      // Lessons
       "variables": "Variables",
       "functions": "Functions",
       "strings": "Strings",
       "contentFor": "Content for {{lesson}} will be displayed here.",
       
-      // Access Code
       "enterAccessCode": "Enter Access Code",
       "accessCodeRequired": "Please enter your 8-character access code to continue",
       "accessCode": "Access Code",
       "verify": "Verify",
       "invalidCode": "Invalid or already used code",
       
-      // Messages
       "signingIn": "Signing in...",
       "creatingAccount": "Creating account...",
       "verifying": "Verifying...",
       
-      // Footer
       "allRightsReserved": "All rights reserved",
       "privacyPolicyLink": "Privacy Policy",
       "termsOfServiceLink": "Terms of Service",
       
-      // Privacy & Terms
       "privacyTitle": "Privacy Policy",
       "termsTitle": "Terms of Service",
       "close": "Close",
       "privacyLastUpdated": "Last updated: January 2026",
       "termsLastUpdated": "Last updated: January 2026",
       
-      // Privacy sections
       "privacyInfo": "Information We Collect",
       "privacyInfoDesc": "We collect information you provide directly to us, including your name, email address, and any other information you choose to provide when using our services.",
       "privacyUse": "How We Use Your Information",
@@ -65,7 +57,6 @@ const resources = {
       "privacyContact": "Contact Us",
       "privacyContactDesc": "If you have questions about this Privacy Policy, please contact us at privacy@eyycourses.com",
       
-      // Terms sections
       "termsAcceptance": "Acceptance of Terms",
       "termsAcceptanceDesc": "By accessing and using this service, you accept and agree to be bound by the terms and provision of this agreement.",
       "termsLicense": "Use License",
@@ -82,7 +73,6 @@ const resources = {
   },
   ar: {
     translation: {
-      // Auth
       "signin": "تسجيل الدخول",
       "signup": "إنشاء حساب",
       "signout": "تسجيل الخروج",
@@ -95,41 +85,34 @@ const resources = {
       "welcome": "مرحباً بك في eyycourses",
       "selectLesson": "اختر درساً من الشريط الجانبي للبدء",
       
-      // Dashboard
       "dashboard": "لوحة التحكم",
       "comingSoon": "قريباً",
       
-      // Lessons
       "variables": "المتغيرات",
       "functions": "الدوال",
       "strings": "النصوص",
       "contentFor": "سيتم عرض محتوى {{lesson}} هنا.",
       
-      // Access Code
       "enterAccessCode": "أدخل رمز الوصول",
       "accessCodeRequired": "يرجى إدخال رمز الوصول المكون من 8 أحرف للمتابعة",
       "accessCode": "رمز الوصول",
       "verify": "تحقق",
       "invalidCode": "رمز غير صالح أو مستخدم بالفعل",
       
-      // Messages
       "signingIn": "جاري تسجيل الدخول...",
       "creatingAccount": "جاري إنشاء الحساب...",
       "verifying": "جاري التحقق...",
       
-      // Footer
       "allRightsReserved": "جميع الحقوق محفوظة",
       "privacyPolicyLink": "سياسة الخصوصية",
       "termsOfServiceLink": "شروط الخدمة",
       
-      // Privacy & Terms
       "privacyTitle": "سياسة الخصوصية",
       "termsTitle": "شروط الخدمة",
       "close": "إغلاق",
       "privacyLastUpdated": "آخر تحديث: يناير 2026",
       "termsLastUpdated": "آخر تحديث: يناير 2026",
       
-      // Privacy sections
       "privacyInfo": "المعلومات التي نجمعها",
       "privacyInfoDesc": "نجمع المعلومات التي تقدمها لنا مباشرة، بما في ذلك اسمك وعنوان بريدك الإلكتروني وأي معلومات أخرى تختار تقديمها عند استخدام خدماتنا.",
       "privacyUse": "كيف نستخدم معلوماتك",
@@ -143,7 +126,6 @@ const resources = {
       "privacyContact": "اتصل بنا",
       "privacyContactDesc": "إذا كان لديك أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا على privacy@eyycourses.com",
       
-      // Terms sections
       "termsAcceptance": "قبول الشروط",
       "termsAcceptanceDesc": "من خلال الوصول إلى هذه الخدمة واستخدامها، فإنك تقبل وتوافق على الالتزام بشروط وأحكام هذه الاتفاقية.",
       "termsLicense": "ترخيص الاستخدام",

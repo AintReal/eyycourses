@@ -14,10 +14,8 @@ const AdminLogin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if already logged in as admin
     checkAdminSession();
     
-    // Load lockout data from localStorage
     const savedLockout = localStorage.getItem('adminLockout');
     if (savedLockout) {
       const lockoutData = JSON.parse(savedLockout);
@@ -32,7 +30,6 @@ const AdminLogin = () => {
   }, []);
 
   useEffect(() => {
-    // Update lockout message every second
     if (lockoutTime) {
       const interval = setInterval(() => {
         const now = Date.now();
@@ -62,7 +59,7 @@ const AdminLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    // Check if locked out
+    // Rate limiting check
     if (lockoutTime && Date.now() < lockoutTime) {
       return;
     }
@@ -71,7 +68,6 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      // Sign in with Supabase
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password
@@ -79,7 +75,6 @@ const AdminLogin = () => {
 
       if (signInError) throw signInError;
 
-      // Check if user is admin
       const isAdmin = data.user?.user_metadata?.is_admin === true;
       
       if (!isAdmin) {
@@ -87,22 +82,19 @@ const AdminLogin = () => {
         throw new Error('Access denied. Admin privileges required.');
       }
 
-      // Reset attempts on successful login
       setLoginAttempts(0);
       localStorage.removeItem('adminLockout');
       
-      // Navigate to admin dashboard
       navigate('/admin/dashboard');
     } catch (err) {
       console.error('Admin login error:', err);
       
-      // Increment failed attempts
       const newAttempts = loginAttempts + 1;
       setLoginAttempts(newAttempts);
       
-      // Rate limiting: Lock out after 5 failed attempts for 5 minutes
+      // Lock out after 5 failed attempts
       if (newAttempts >= 5) {
-        const lockUntil = Date.now() + (5 * 60 * 1000); // 5 minutes
+        const lockUntil = Date.now() + (5 * 60 * 1000);
         setLockoutTime(lockUntil);
         localStorage.setItem('adminLockout', JSON.stringify({ until: lockUntil }));
         setError('Too many failed attempts. Account locked for 5 minutes.');

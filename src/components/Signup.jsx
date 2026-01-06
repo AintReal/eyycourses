@@ -45,6 +45,7 @@ const handleSignup = async (e) => {
     if(results.success){
       setEmailSent(true)
     } else if (results.error) {
+      // Handle duplicate account error
       if (results.error.message?.includes('already registered') || 
           results.error.message?.includes('already exists')) {
         setError('You already have an account! Please sign in instead.')

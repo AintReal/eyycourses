@@ -23,7 +23,6 @@ const Dashboard = () => {
     fetchCourses();
   }, []);
 
-  // Generate signed URL when lesson is selected
   useEffect(() => {
     const generateVideoUrl = async () => {
       if (!selectedLesson?.video_url) {
@@ -31,16 +30,14 @@ const Dashboard = () => {
         return;
       }
 
-      // Check if it's a storage path (starts with 'lesson-videos/')
+      // Generate signed URL for private videos
       if (selectedLesson.video_url.startsWith('lesson-videos/')) {
         try {
-          // Extract the file path
           const filePath = selectedLesson.video_url.replace('lesson-videos/', '');
           
-          // Generate signed URL (valid for 1 hour)
           const { data, error } = await supabase.storage
             .from('lesson-videos')
-            .createSignedUrl(filePath, 3600); // 3600 seconds = 1 hour
+            .createSignedUrl(filePath, 3600);
 
           if (error) throw error;
           setVideoUrl(data.signedUrl);
@@ -49,7 +46,6 @@ const Dashboard = () => {
           setVideoUrl(null);
         }
       } else {
-        // External URL (YouTube, etc.) - use as is
         setVideoUrl(selectedLesson.video_url);
       }
     };
@@ -93,7 +89,7 @@ const Dashboard = () => {
   };
 
   const toggleCourse = async (course) => {
-    if (!course.is_open) return; // Don't expand closed courses
+    if (!course.is_open) return;
     
     if (expandedCourse === course.id) {
       setExpandedCourse(null);

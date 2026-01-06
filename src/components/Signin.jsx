@@ -38,7 +38,6 @@ useEffect(() => {
     }
   }
   
-  // Check for lockout
   const savedLockout = localStorage.getItem('userLoginLockout');
   if (savedLockout) {
     const lockoutData = JSON.parse(savedLockout);
@@ -53,7 +52,6 @@ useEffect(() => {
 }, [session, navigate])
 
 useEffect(() => {
-  // Update lockout countdown
   if (lockoutTime) {
     const interval = setInterval(() => {
       const now = Date.now();
@@ -91,7 +89,6 @@ const handleCodeSuccess = () => {
 const handleSignin = async (e) => {
   e.preventDefault()
   
-  // Check if locked out
   if (lockoutTime && Date.now() < lockoutTime) {
     return;
   }
@@ -101,11 +98,9 @@ const handleSignin = async (e) => {
   try {
     const results = await signInUser(email, password)
     if(results.success){
-      // Reset login attempts on success
       setLoginAttempts(0);
       localStorage.removeItem('userLoginLockout');
       
-      // Check if user has validated their code
       const codeValidated = results.data?.user?.user_metadata?.code_validated;
       if (!codeValidated) {
         setShowCodeModal(true);
@@ -115,11 +110,10 @@ const handleSignin = async (e) => {
         navigate("/dashboard");
       }
     } else if(!results.success){
-      // Increment failed attempts
       const newAttempts = loginAttempts + 1;
       setLoginAttempts(newAttempts);
       
-      // Lock out after 5 failed attempts for 3 minutes
+      // User rate limiting (3 minute lockout)
       if (newAttempts >= 5) {
         const lockUntil = Date.now() + (3 * 60 * 1000); // 3 minutes
         setLockoutTime(lockUntil);
