@@ -15,6 +15,8 @@ const resources = {
       "alreadyHaveAccount": "Already have an account?",
       "welcome": "Welcome to eyycourses",
       "selectLesson": "Select a lesson from the sidebar to get started",
+      "startYourLearningJourney": "Start your learning journey",
+      "accessYourLearningJourney": "Access your learning journey",
       
       "dashboard": "Dashboard",
       "comingSoon": "Soon",
@@ -84,6 +86,8 @@ const resources = {
       "alreadyHaveAccount": "لديك حساب بالفعل؟",
       "welcome": "مرحباً بك في eyycourses",
       "selectLesson": "اختر درساً من الشريط الجانبي للبدء",
+      "startYourLearningJourney": "ابدأ رحلتك التعليمية",
+      "accessYourLearningJourney": "استكمل رحلتك التعليمية",
       
       "dashboard": "لوحة التحكم",
       "comingSoon": "قريباً",

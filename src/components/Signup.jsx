@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faSpinner, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faSpinner, faUser, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import LanguageSwitcher from './LanguageSwitcher';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
@@ -14,6 +14,7 @@ const { t } = useTranslation();
 const [name, setName] = useState("")
 const [email, setEmail] = useState("")
 const [password, setPassword] = useState("")
+const [showPassword, setShowPassword] = useState(false)
 const [loading, setLoading] = useState(false)
 const [error, setError] = useState(false)
 const [emailSent, setEmailSent] = useState(false)
@@ -154,7 +155,6 @@ if (emailSent) {
 
 return (
 <div className="min-h-screen h-screen bg-zinc-900 flex items-center justify-center px-4 relative overflow-hidden">
-  <LanguageSwitcher />
 
   <div 
     className="absolute top-0 left-0 w-96 h-96 opacity-60" 
@@ -232,7 +232,7 @@ return (
           className="h-32 w-auto mx-auto drop-shadow-lg"
         />
       </div>
-      <p className="text-gray-500 text-sm font-light">Start your learning journey</p>
+      <p className="text-gray-500 text-sm font-light">{t('startYourLearningJourney')}</p>
     </div>
 
     <div className="backdrop-blur-sm rounded-2xl p-8 bg-zinc-900/40 border border-zinc-700/50">
@@ -259,11 +259,11 @@ return (
             {t('name')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faUser} className="text-gray-500 text-sm" />
             </div>
             <input 
-              className="w-full pl-11 pr-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
               type="text"
               name="name"
               id="userName" 
@@ -279,11 +279,11 @@ return (
             {t('email')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 text-sm" />
             </div>
             <input 
-              className="w-full pl-11 pr-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
               type="email"
               name="newEmail"
               id="userNewEmail" 
@@ -299,18 +299,24 @@ return (
             {t('password')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faLock} className="text-gray-500 text-sm" />
             </div>
             <input 
-              className="w-full pl-11 pr-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
-              type="password"
+              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-12 rtl:pl-12 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              type={showPassword ? "text" : "password"}
               name="newPassword"
               id="userNewPassword"
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••"
               required
             />
+            <div
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 ltr:right-0 rtl:left-0 ltr:pr-4 rtl:pl-4 flex items-center cursor-pointer text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
+            </div>
           </div>
         </div>
 
@@ -346,6 +352,8 @@ return (
           >
             {t('signin')}
           </Link>
+          {' · '}
+          <LanguageSwitcher />
         </p>
       </div>
     </div>

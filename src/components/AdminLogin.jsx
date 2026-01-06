@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faSpinner, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loginAttempts, setLoginAttempts] = useState(0);
@@ -151,7 +152,7 @@ const AdminLogin = () => {
         <form onSubmit={handleLogin} className="space-y-5">
           {/* Email Field */}
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 text-sm" />
             </div>
             <input
@@ -161,7 +162,7 @@ const AdminLogin = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLocked}
-              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 pl-11 
+              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 ltr:pl-11 rtl:pr-11
                        focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20
                        disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             />
@@ -169,20 +170,28 @@ const AdminLogin = () => {
 
           {/* Password Field */}
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faLock} className="text-gray-500 text-sm" />
             </div>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLocked}
-              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 pl-11 
+              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 ltr:pl-11 rtl:pr-11 ltr:pr-12 rtl:pl-12
                        focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20
                        disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             />
+            <div
+              onClick={() => !isLocked && setShowPassword(!showPassword)}
+              className={`absolute inset-y-0 ltr:right-0 rtl:left-0 ltr:pr-4 rtl:pl-4 flex items-center text-gray-500 hover:text-gray-300 transition-colors ${
+                isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
+            </div>
           </div>
 
           {/* Error Message */}

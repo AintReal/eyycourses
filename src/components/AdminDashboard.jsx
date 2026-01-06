@@ -98,8 +98,24 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     
-    const { data: usersData } = await supabase.auth.admin.listUsers();
-    if (usersData) setUsers(usersData.users);
+    // Fetch users from public.users table instead of auth.admin
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: true });
+    
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+    }
+    
+    if (usersData) {
+      // Add user numbers based on creation order
+      const usersWithNumbers = usersData.map((user, index) => ({
+        ...user,
+        userNumber: index + 1
+      }));
+      setUsers(usersWithNumbers);
+    }
 
     const { data: codesData } = await supabase
       .from('access_codes')
@@ -469,7 +485,7 @@ const AdminDashboard = () => {
                               : 'bg-gray-600/20 text-gray-400'
                           }`}
                         >
-                          {course.is_open ? 'Open' : 'قريباً'}
+                          {course.is_open ? 'Open' : 'Soon'}
                         </button>
                       </div>
                       <button
@@ -574,6 +590,7 @@ const AdminDashboard = () => {
               <table className="w-full">
                 <thead className="bg-zinc-900">
                   <tr>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">#</th>
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Email</th>
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Name</th>
                     <th className="text-left px-4 py-3 text-gray-400 font-medium">Created</th>
@@ -583,11 +600,12 @@ const AdminDashboard = () => {
                 <tbody>
                   {users.map((user) => (
                     <tr key={user.id} className="border-t border-zinc-700">
+                      <td className="px-4 py-3 text-gray-400 font-mono">#{user.userNumber}</td>
                       <td className="px-4 py-3">{user.email}</td>
-                      <td className="px-4 py-3">{user.user_metadata?.name || '-'}</td>
+                      <td className="px-4 py-3">{user.full_name || '-'}</td>
                       <td className="px-4 py-3">{new Date(user.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
-                        {user.user_metadata?.code_validated ? (
+                        {user.code_validated ? (
                           <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
                         ) : (
                           <FontAwesomeIcon icon={faTimesCircle} className="text-red-500" />
@@ -633,20 +651,29 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {accessCodes.map((code) => (
-                    <tr key={code.id} className="border-t border-zinc-700">
-                      <td className="px-4 py-3 font-mono">{code.code}</td>
-                      <td className="px-4 py-3">
-                        {code.is_used ? (
-                          <span className="bg-zinc-700 text-gray-300 px-2 py-1 rounded text-xs">Used</span>
-                        ) : (
-                          <span className="bg-zinc-700 text-white px-2 py-1 rounded text-xs">Available</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">{code.used_by || '-'}</td>
-                      <td className="px-4 py-3">{new Date(code.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
+                  {accessCodes.map((code) => {
+                    const usedByUser = users.find(u => u.id === code.used_by);
+                    return (
+                      <tr key={code.id} className="border-t border-zinc-700">
+                        <td className="px-4 py-3 font-mono">{code.code}</td>
+                        <td className="px-4 py-3">
+                          {code.used ? (
+                            <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded text-xs border border-red-800">Used</span>
+                          ) : (
+                            <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs border border-green-800">Available</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {usedByUser ? (
+                            <span className="text-blue-400">User #{usedByUser.userNumber}</span>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">{new Date(code.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -656,8 +683,8 @@ const AdminDashboard = () => {
 
       {/* Course Modal */}
       {showCourseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md animate-slideUp">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">{editingCourse ? 'Edit Course' : 'Add Course'}</h3>
               <button onClick={() => setShowCourseModal(false)} className="text-gray-400 hover:text-white">
@@ -699,7 +726,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setCourseForm({...courseForm, is_open: e.target.checked})}
                   className="w-4 h-4"
                 />
-                <label className="text-sm">Course is Open (not قريباً)</label>
+                <label className="text-sm">Course is Open (not Soon)</label>
               </div>
               <div className="flex gap-2">
                 <button
@@ -725,8 +752,8 @@ const AdminDashboard = () => {
 
       {/* Lesson Modal */}
       {showLessonModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">{editingLesson ? 'Edit Lesson' : 'Add Lesson'}</h3>
               <button onClick={() => setShowLessonModal(false)} className="text-gray-400 hover:text-white">

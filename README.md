@@ -1,6 +1,6 @@
 # eyycourses - Learning Platform
 
-A full-stack learning management system built with React and Supabase. I built it because basically I wanted to create a course for my tiktok followers but all the existing platforms were either too expensive or too limited in features. So I decided to build my own platform that would give me full control over the content and user experience. This is Version 0.1.0 so mind any bugs or missing features.
+A full-stack learning management system built with React and Supabase. I built it because basically I wanted to create a course for my tiktok followers but all the existing platforms were either too expensive or too limited in features. So I decided to build my own platform that would give me full control over the content and user experience. This is Version 0.1.1 so mind any bugs or missing features.
 
 ---
 

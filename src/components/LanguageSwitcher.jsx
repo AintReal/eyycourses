@@ -17,14 +17,14 @@ const LanguageSwitcher = () => {
   };
 
   return (
-    <button
+    <span
       onClick={toggleLanguage}
-      className={`fixed top-4 bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg border border-zinc-600 transition-colors z-50 font-medium text-sm ${
-        i18n.language === 'ar' ? 'left-4' : 'right-4'
-      }`}
+      className="text-gray-500 hover:text-gray-300 transition-colors cursor-pointer text-sm"
+      style={{ fontFamily: i18n.language === 'ar' ? "'Ubuntu', system-ui, sans-serif" : "'Harmattan', 'Ubuntu', system-ui, sans-serif" }}
+      title="Switch Language"
     >
-      {i18n.language === 'en' ? 'ع' : 'EN'}
-    </button>
+      {i18n.language === 'en' ? 'عربي' : 'EN'}
+    </span>
   );
 };
 
