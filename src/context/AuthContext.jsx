@@ -13,7 +13,8 @@ export const AuthContextProvider = ({children}) => {
             options: {
                 data: {
                     full_name: name,
-                }
+                },
+                emailRedirectTo: `${window.location.origin}/signin`
             }
         });
 

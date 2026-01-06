@@ -27,6 +27,16 @@ const [lockoutTime, setLockoutTime] = useState(null)
 const {session, signInUser, signInWithGoogle, validateAccessCode} = UserAuth()
 const navigate = useNavigate()
 
+// Handle email verification redirect
+useEffect(() => {
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    // Clear the hash from URL
+    window.history.replaceState(null, '', window.location.pathname);
+    setError('Email verified! Please sign in with your credentials.');
+  }
+}, []);
+
 // Redirect to dashboard if user is already authenticated AND code is validated
 useEffect(() => {
   if (session) {
