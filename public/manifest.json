@@ -1,0 +1,28 @@
+{
+  "name": "eyycourses - Online Learning Platform",
+  "short_name": "eyycourses",
+  "description": "Saudi Arabia's premier online learning platform. Access high-quality courses and advance your skills.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#18181B",
+  "theme_color": "#18181B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/unlogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "learning"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/"
+}

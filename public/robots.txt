@@ -1,0 +1,13 @@
+# Robots.txt for eyycourses
+User-agent: *
+Allow: /
+Allow: /signin
+Allow: /signup
+Disallow: /admin-dashboard
+Disallow: /adminpage
+
+# Sitemap
+Sitemap: https://eyycourses.vercel.app/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 10
