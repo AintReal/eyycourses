@@ -18,6 +18,7 @@ dist-ssr
 find_uid.sql
 fix_policies.sql
 make_admin.sql
+convert_videos.sh
 secure_rls_policies.sql
 setup_admin_auth.sql
 setup_courses.sql
