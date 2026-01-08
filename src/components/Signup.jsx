@@ -24,12 +24,6 @@ const [showTermsModal, setShowTermsModal] = useState(false)
 const {signUpNewUser, signInWithGoogle} = UserAuth()
 const navigate = useNavigate()
 
-// Ensure Arabic and RTL for Signup
-useEffect(() => {
-  i18n.changeLanguage('ar');
-  document.documentElement.setAttribute('lang', 'ar');
-  document.documentElement.setAttribute('dir', 'rtl');
-}, [i18n]);
 
 const handleReturningHome = (e) =>{
   e.preventDefault()

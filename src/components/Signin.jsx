@@ -28,12 +28,6 @@ const [lockoutTime, setLockoutTime] = useState(null)
 const {session, signInUser, signInWithGoogle, validateAccessCode} = UserAuth()
 const navigate = useNavigate()
 
-// Ensure Arabic and RTL for Signin
-useEffect(() => {
-  i18n.changeLanguage('ar');
-  document.documentElement.setAttribute('lang', 'ar');
-  document.documentElement.setAttribute('dir', 'rtl');
-}, [i18n]);
 
 useEffect(() => {
   if (location.state?.error) {
