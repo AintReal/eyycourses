@@ -755,7 +755,7 @@ const Dashboard = () => {
                         ></iframe>
                       </div>
                     ) : (
-                      // Direct video file
+                      // Direct video file - MP4 with H.264 codec
                       <video
                         key={`video-${selectedMiniLesson?.id || selectedLesson?.id}`}
                         controls
@@ -765,8 +765,7 @@ const Dashboard = () => {
                         playsInline
                         preload="metadata"
                       >
-                        <source src={videoUrl} type="video/mp4" />
-                        <source src={videoUrl} type="video/webm" />
+                        <source src={videoUrl} type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
                         Your browser does not support the video tag.
                       </video>
                     )}

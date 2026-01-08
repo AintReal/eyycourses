@@ -23,6 +23,12 @@ secure_rls_policies.sql
 setup_admin_auth.sql
 setup_courses.sql
 ADD_BAN_COLUMN.sql
+CRITICAL_VIDEO_FIX.md
+FINAL_VIDEO_SOLUTION.md
+check-video.sh
+convert-videos.sh
+batch-convert-videos.sh
+convert-videos.sh
 
 
 codes.txt

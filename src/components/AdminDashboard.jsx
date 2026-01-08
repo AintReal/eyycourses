@@ -107,17 +107,22 @@ const AdminDashboard = () => {
 
   const loadFFmpeg = async () => {
     try {
+      console.log('🎬 Loading FFmpeg.wasm...');
       const ffmpeg = ffmpegRef.current;
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      
+      console.log('📦 Fetching FFmpeg core files...');
       await ffmpeg.load({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
       });
+      
       setFfmpegLoaded(true);
-      console.log('FFmpeg loaded successfully');
+      console.log('✅ FFmpeg loaded successfully! Video conversion ready.');
     } catch (error) {
-      console.error('Failed to load FFmpeg:', error);
+      console.error('❌ Failed to load FFmpeg:', error);
       setFfmpegLoaded(false);
+      setToast({ message: 'Warning: Video converter failed to load. Videos may not work on all devices.', type: 'warning' });
     }
   };
 
@@ -503,35 +508,45 @@ const AdminDashboard = () => {
     try {
       const ffmpeg = ffmpegRef.current;
       
+      console.log('🎬 Starting video conversion...');
+      console.log('📁 Original file:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+      
       // Write input file
       await ffmpeg.writeFile('input', await fetchFile(file));
       
-      // Convert to MP4 with H.264 codec (universal compatibility)
+      // Convert to MP4 with H.264 baseline profile (MAXIMUM compatibility for Windows/all browsers)
+      // Using baseline profile instead of high - this is the key for Windows compatibility
       await ffmpeg.exec([
         '-i', 'input',
-        '-c:v', 'libx264',
-        '-preset', 'medium',
-        '-crf', '23',
-        '-profile:v', 'high',
-        '-level', '4.0',
-        '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac',
-        '-b:a', '128k',
-        '-movflags', '+faststart',
+        '-c:v', 'libx264',              // H.264 video codec
+        '-preset', 'fast',               // Faster encoding
+        '-crf', '23',                    // Quality level (18-28 good range)
+        '-profile:v', 'baseline',        // BASELINE profile for maximum compatibility
+        '-level', '3.0',                 // Level 3.0 for wide device support
+        '-pix_fmt', 'yuv420p',           // Pixel format (required for compatibility)
+        '-c:a', 'aac',                   // AAC audio codec
+        '-b:a', '128k',                  // Audio bitrate
+        '-ar', '44100',                  // Audio sample rate (standard)
+        '-ac', '2',                      // Stereo audio
+        '-movflags', '+faststart',       // Enable progressive download/streaming
+        '-max_muxing_queue_size', '9999', // Prevent muxing issues
         'output.mp4'
       ]);
       
       // Read output file
       const data = await ffmpeg.readFile('output.mp4');
       
+      console.log('✅ Conversion complete!');
+      console.log('📁 Converted size:', `${(data.buffer.byteLength / 1024 / 1024).toFixed(2)} MB`);
+      
       // Clean up
       await ffmpeg.deleteFile('input');
       await ffmpeg.deleteFile('output.mp4');
       
-      // Return as Blob
-      return new Blob([data.buffer], { type: 'video/mp4' });
+      // Return as Blob with explicit MIME type
+      return new Blob([data.buffer], { type: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' });
     } catch (error) {
-      console.error('Video conversion error:', error);
+      console.error('❌ Video conversion error:', error);
       throw new Error('Failed to convert video. Uploading original format.');
     }
   };
@@ -540,6 +555,9 @@ const AdminDashboard = () => {
     try {
       setUploadingVideo(true);
       setUploadProgress(0);
+
+      console.log('📤 Starting upload process...');
+      console.log('📁 File:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
       const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/mov'];
       if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|mov|avi)$/i)) {
@@ -558,20 +576,25 @@ const AdminDashboard = () => {
       let uploadFile = file;
       
       if (ffmpegLoaded) {
+        console.log('🔄 FFmpeg loaded - converting video...');
         setToast({ message: 'Converting video to universal format for all devices... This may take a few minutes.', type: 'info' });
         try {
           uploadFile = await convertVideoToMP4(file);
+          console.log('✅ Conversion successful!');
           setToast({ message: 'Video converted successfully! Now works on all devices. Uploading...', type: 'success' });
         } catch (conversionError) {
-          console.warn('Conversion failed, uploading original:', conversionError);
+          console.error('❌ Conversion failed:', conversionError);
+          console.warn('⚠️ Uploading original file instead');
           setToast({ message: 'Warning: Conversion failed. Uploading original format. May not work on Windows.', type: 'warning' });
         }
       } else {
+        console.warn('⚠️ FFmpeg not loaded - skipping conversion');
         setToast({ message: 'Warning: Video converter not loaded. Video may not work on all devices.', type: 'warning' });
       }
 
       setUploadProgress(50);
 
+      console.log('📤 Uploading to Supabase...');
       // Unique filename with timestamp
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.mp4`;
       const filePath = `lessons/${fileName}`;
@@ -588,11 +611,14 @@ const AdminDashboard = () => {
 
       // Store path (not public URL) - signed URLs generated on-demand
       const storagePath = `lesson-videos/${filePath}`;
+      
+      console.log('✅ Upload complete!');
+      console.log('📂 Storage path:', storagePath);
 
       setUploadProgress(100);
       return storagePath;
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error('❌ Upload error:', error);
       throw error;
     } finally {
       setUploadingVideo(false);
