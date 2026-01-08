@@ -34,15 +34,15 @@ for file in "$INPUT_DIR"/*.{mp4,mov,avi,mkv,webm,MP4,MOV,AVI,MKV,WEBM} 2>/dev/nu
     
     echo "[$total] Converting: $filename"
     
-    # Convert to H.264 video + AAC audio with web-optimized settings
+    # THE ONLY SAFE WEB COMBO: H.264 Main + yuv420p + AAC
     ffmpeg -i "$file" \
       -c:v libx264 \
-      -preset medium \
-      -crf 23 \
+      -profile:v main \
+      -level 4.0 \
+      -pix_fmt yuv420p \
+      -movflags +faststart \
       -c:a aac \
       -b:a 128k \
-      -movflags +faststart \
-      -pix_fmt yuv420p \
       -y \
       "$output_file" \
       -loglevel error -stats

@@ -26,15 +26,15 @@ echo "Input: $INPUT"
 echo "Output: $OUTPUT"
 echo ""
 
-# Convert to H.264 video + AAC audio with web-optimized settings
+# THE ONLY SAFE WEB COMBO: H.264 Main + yuv420p + AAC
 ffmpeg -i "$INPUT" \
   -c:v libx264 \
-  -preset medium \
-  -crf 23 \
+  -profile:v main \
+  -level 4.0 \
+  -pix_fmt yuv420p \
+  -movflags +faststart \
   -c:a aac \
   -b:a 128k \
-  -movflags +faststart \
-  -pix_fmt yuv420p \
   "$OUTPUT"
 
 if [ $? -eq 0 ]; then
