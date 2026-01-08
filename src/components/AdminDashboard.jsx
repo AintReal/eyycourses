@@ -554,19 +554,20 @@ const AdminDashboard = () => {
 
       setUploadProgress(20);
 
-      // Convert to compatible format if needed
+      // Always convert to H.264+AAC for universal compatibility
       let uploadFile = file;
-      const isMP4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
       
-      if (!isMP4 && ffmpegLoaded) {
-        setToast({ message: 'Converting video to universal MP4 format... This may take a few minutes.', type: 'info' });
+      if (ffmpegLoaded) {
+        setToast({ message: 'Converting video to universal format for all devices... This may take a few minutes.', type: 'info' });
         try {
           uploadFile = await convertVideoToMP4(file);
-          setToast({ message: 'Video converted successfully! Uploading...', type: 'success' });
+          setToast({ message: 'Video converted successfully! Now works on all devices. Uploading...', type: 'success' });
         } catch (conversionError) {
           console.warn('Conversion failed, uploading original:', conversionError);
-          setToast({ message: 'Note: Uploading original format. May not work on all devices.', type: 'warning' });
+          setToast({ message: 'Warning: Conversion failed. Uploading original format. May not work on Windows.', type: 'warning' });
         }
+      } else {
+        setToast({ message: 'Warning: Video converter not loaded. Video may not work on all devices.', type: 'warning' });
       }
 
       setUploadProgress(50);
@@ -1873,7 +1874,18 @@ const AdminDashboard = () => {
                   <CardContent className="pt-3">
                     <p className="text-yellow-500/90 text-xs flex items-center gap-2">
                       <FontAwesomeIcon icon={faSpinner} spin />
-                      Video converter loading... Non-MP4 videos will be uploaded as-is.
+                      Video converter loading... Please wait for full compatibility.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {ffmpegLoaded && (
+                <Card className="bg-green-950/20 border-green-800/30">
+                  <CardContent className="pt-3">
+                    <p className="text-green-500/90 text-xs flex items-center gap-2">
+                      <FontAwesomeIcon icon={faCheckCircle} />
+                      ✓ Auto-converter ready! Videos work on all devices (Mac, Windows, mobile).
                     </p>
                   </CardContent>
                 </Card>
@@ -1884,7 +1896,7 @@ const AdminDashboard = () => {
                 <CardContent className="pt-4 space-y-3">
                   <Label htmlFor="video-upload" className="text-sm text-zinc-400">
                     <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                    Upload from Computer (Any format - auto-converts to MP4)
+                    Upload Video (Any format - automatically converts for universal compatibility)
                   </Label>
                   <input
                     id="video-upload"
@@ -2089,7 +2101,7 @@ const AdminDashboard = () => {
                 <CardContent className="pt-4 space-y-3">
                   <Label htmlFor="mini-video-upload" className="text-sm text-zinc-400">
                     <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                    Upload from Computer (Auto-converts to MP4)
+                    Upload Video (Any format - automatically converts for universal compatibility)
                   </Label>
                   <input
                     id="mini-video-upload"
