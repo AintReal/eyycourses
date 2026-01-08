@@ -8,8 +8,18 @@ import ConfirmDialog from './ConfirmDialog';
 import Analytics from './Analytics';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '../../node_modules/react-i18next';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [accessCodes, setAccessCodes] = useState([]);
   const [sections, setSections] = useState([]);
@@ -74,6 +84,11 @@ const AdminDashboard = () => {
   const [selectedVideoFile, setSelectedVideoFile] = useState(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Question builder state
+  const [showQuestionBuilder, setShowQuestionBuilder] = useState(false);
+  const [questionText, setQuestionText] = useState('');
+  const [questionAnswers, setQuestionAnswers] = useState([{ text: '', isCorrect: false }]);
 
   useEffect(() => {
     loadFFmpeg();
@@ -762,250 +777,395 @@ const AdminDashboard = () => {
     });
   };
 
+  // Question Builder Functions
+  const addAnswer = () => {
+    setQuestionAnswers([...questionAnswers, { text: '', isCorrect: false }]);
+  };
+
+  const removeAnswer = (index) => {
+    if (questionAnswers.length > 1) {
+      setQuestionAnswers(questionAnswers.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateAnswer = (index, text) => {
+    const updated = [...questionAnswers];
+    updated[index].text = text;
+    setQuestionAnswers(updated);
+  };
+
+  const setCorrectAnswer = (index) => {
+    const updated = questionAnswers.map((answer, i) => ({
+      ...answer,
+      isCorrect: i === index
+    }));
+    setQuestionAnswers(updated);
+  };
+
+  const insertQuestion = () => {
+    if (!questionText.trim()) {
+      setToast({ message: t('pleaseEnterQuestion'), type: 'error' });
+      return;
+    }
+
+    const validAnswers = questionAnswers.filter(a => a.text.trim());
+    if (validAnswers.length < 2) {
+      setToast({ message: t('pleaseAddTwoAnswers'), type: 'error' });
+      return;
+    }
+
+    const hasCorrectAnswer = validAnswers.some(a => a.isCorrect);
+    if (!hasCorrectAnswer) {
+      setToast({ message: t('pleaseSelectCorrectAnswer'), type: 'error' });
+      return;
+    }
+
+    // Create question object in JSON format
+    const questionData = {
+      type: 'question',
+      question: questionText,
+      answers: validAnswers
+    };
+
+    // Insert as a special formatted block
+    const questionBlock = `\n\n[QUESTION]${JSON.stringify(questionData)}[/QUESTION]\n\n`;
+    
+    setMiniLessonForm({
+      ...miniLessonForm,
+      content_html: miniLessonForm.content_html + questionBlock
+    });
+
+    // Reset question builder
+    setQuestionText('');
+    setQuestionAnswers([{ text: '', isCorrect: false }]);
+    setShowQuestionBuilder(false);
+    setToast({ message: t('questionAddedSuccessfully'), type: 'success' });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-zinc-400 text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white">
-      {/* Header */}
-      <div className="bg-zinc-800/50 backdrop-blur border-b border-zinc-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+    <div className="min-h-screen bg-black text-zinc-100 flex relative overflow-hidden">
+      {/* Grid Background Effect */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          backgroundColor: "#27272a",
+          backgroundSize: "8px 8px",
+          maskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 50%, #000 50%, transparent 90%)
+          `,
+          WebkitMaskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 50%, #000 50%, transparent 90%)
+          `,
+          maskComposite: "intersect",
+          WebkitMaskComposite: "source-in",
+        }}
+      />
+
+      {/* Sidebar */}
+      <div className="w-64 bg-zinc-950/80 backdrop-blur border-r border-zinc-800 flex flex-col fixed h-full z-10">
+        {/* Logo/Header */}
+        <div className="p-6 border-b border-zinc-800">
+          <h2 className="text-xl font-bold text-white">Admin Panel</h2>
+          <p className="text-sm text-zinc-500 mt-1">eyycourses</p>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <button
+            onClick={() => setActiveTab('analytics')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
+              activeTab === 'analytics' 
+                ? 'bg-white text-black font-medium shadow-lg' 
+                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <FontAwesomeIcon icon={faChartBar} className="text-base" />
+            <span>Analytics</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setActiveTab('sections');
+              setSelectedSection(null);
+              setSelectedCourse(null);
+              setSelectedLesson(null);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
+              activeTab === 'sections' 
+                ? 'bg-white text-black font-medium shadow-lg' 
+                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <FontAwesomeIcon icon={faBook} className="text-base" />
+            <span className="flex-1 text-left">Sections</span>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'sections' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+              {sections.length}
+            </Badge>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
+              activeTab === 'courses' 
+                ? 'bg-white text-black font-medium shadow-lg' 
+                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <FontAwesomeIcon icon={faBook} className="text-base" />
+            <span className="flex-1 text-left">All Courses</span>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'courses' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+              {courses.length}
+            </Badge>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
+              activeTab === 'users' 
+                ? 'bg-white text-black font-medium shadow-lg' 
+                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <FontAwesomeIcon icon={faUsers} className="text-base" />
+            <span className="flex-1 text-left">Users</span>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'users' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+              {users.length}
+            </Badge>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('codes')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
+              activeTab === 'codes' 
+                ? 'bg-white text-black font-medium shadow-lg' 
+                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <FontAwesomeIcon icon={faKey} className="text-base" />
+            <span className="flex-1 text-left">Access Codes</span>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'codes' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+              {accessCodes.length}
+            </Badge>
+          </button>
+        </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-zinc-800">
+          <Button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-xl transition border border-zinc-600"
+            variant="ghost"
+            className="w-full justify-start gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
           >
             <FontAwesomeIcon icon={faSignOutAlt} />
-            Logout
-          </button>
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-zinc-800/30 border-b border-zinc-700">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-4">
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                activeTab === 'analytics' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <FontAwesomeIcon icon={faChartBar} />
-              Analytics
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('sections');
-                setSelectedSection(null);
-                setSelectedCourse(null);
-                setSelectedLesson(null);
-              }}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                activeTab === 'sections' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <FontAwesomeIcon icon={faBook} />
-              Sections ({sections.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('courses')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                activeTab === 'courses' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <FontAwesomeIcon icon={faBook} />
-              All Courses ({courses.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                activeTab === 'users' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <FontAwesomeIcon icon={faUsers} />
-              Users ({users.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('codes')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                activeTab === 'codes' ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <FontAwesomeIcon icon={faKey} />
-              Access Codes ({accessCodes.length})
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Main Content */}
+      <div className="flex-1 ml-64 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Analytics Tab */}
+          {activeTab === 'analytics' && (
+            <Analytics />
+          )}
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <Analytics />
-        )}
-
-        {/* Sections Tab - Main View */}
-        {activeTab === 'sections' && !selectedSection && !selectedCourse && !selectedLesson && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Sections & Courses</h2>
-              <button
-                onClick={() => openSectionModal()}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition font-medium"
-              >
-                <FontAwesomeIcon icon={faPlus} />
+          {/* Sections Tab - Main View */}
+          {activeTab === 'sections' && !selectedSection && !selectedCourse && !selectedLesson && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Sections & Courses</h2>
+              <Button onClick={() => openSectionModal()} className="text-white">
+                <FontAwesomeIcon icon={faPlus} className="mr-2" />
                 Add Section
-              </button>
+              </Button>
             </div>
 
             {sections.map((section) => (
-              <div key={section.id} className="mb-8">
-                {/* Section Header */}
-                <div className="bg-zinc-800/50 rounded-t-lg p-4 border border-zinc-700 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                      {section.title_en} / {section.title_ar}
-                    </h3>
-                    {section.description_en && (
-                      <p className="text-xs text-gray-500 mt-1">{section.description_en}</p>
-                    )}
+              <Card key={section.id} className="overflow-hidden">
+                <CardHeader className="bg-zinc-900/50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {section.title_en} / {section.title_ar}
+                      </CardTitle>
+                      {section.description_en && (
+                        <CardDescription className="mt-2">{section.description_en}</CardDescription>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => openCourseModal(null, section.id)}
+                        title="Add course to this section"
+                        className="text-white"
+                      >
+                        <FontAwesomeIcon icon={faPlus} className="mr-1.5" />
+                        Course
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openSectionModal(section)}
+                        className="text-white"
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteSection(section.id)}
+                        className="text-white"
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openCourseModal(null, section.id)}
-                      className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition text-sm"
-                      title="Add course to this section"
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                      Course
-                    </button>
-                    <button
-                      onClick={() => openSectionModal(section)}
-                      className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </button>
-                    <button
-                      onClick={() => deleteSection(section.id)}
-                      className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition"
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </div>
-                </div>
+                </CardHeader>
 
-                {/* Courses under this section */}
-                <div className="bg-zinc-800/30 rounded-b-lg border-l border-r border-b border-zinc-700 p-4">
+                <CardContent className="pt-6">
                   {courses.filter(c => c.section_id === section.id).length === 0 ? (
-                    <p className="text-gray-500 text-sm italic">No courses in this section yet.</p>
+                    <p className="text-zinc-500 text-sm italic">No courses in this section yet.</p>
                   ) : (
                     <div className="grid gap-3">
                       {courses.filter(c => c.section_id === section.id).map((course) => (
-                        <div key={course.id} className="bg-zinc-800 rounded-lg p-4 border border-zinc-700">
+                        <Card key={course.id} className="bg-zinc-900/30">
+                          <CardContent className="pt-6">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-base text-zinc-100">
+                                  {course.title_en} / {course.title_ar}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-3">
+                                  <Badge variant={course.is_open ? "default" : "secondary"}>
+                                    {course.is_open ? 'Open' : 'Soon'}
+                                  </Badge>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedCourse(course.id);
+                                      fetchLessons(course.id);
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
+                                  >
+                                    View Lessons →
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => openCourseModal(course)}
+                                  className="text-white"
+                                >
+                                  <FontAwesomeIcon icon={faEdit} />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteCourse(course.id)}
+                                  className="text-white"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Courses without sections */}
+            {courses.filter(c => !c.section_id).length > 0 && (
+              <Card>
+                <CardHeader className="bg-zinc-900/50">
+                  <CardTitle className="text-lg">Uncategorized Courses</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid gap-3">
+                    {courses.filter(c => !c.section_id).map((course) => (
+                      <Card key={course.id} className="bg-zinc-900/30">
+                        <CardContent className="pt-6">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-lg">
+                              <h4 className="font-semibold text-base text-zinc-100">
                                 {course.title_en} / {course.title_ar}
                               </h4>
-                              <div className="flex items-center gap-2 mt-2">
-                                <button
-                                  onClick={() => toggleCourseStatus(course)}
-                                  className={`text-xs px-3 py-1 rounded-full font-medium ${
-                                    course.is_open
-                                      ? 'bg-green-600/20 text-green-400'
-                                      : 'bg-gray-600/20 text-gray-400'
-                                  }`}
-                                >
-                                  {course.is_open ? 'Open' : 'Soon'}
-                                </button>
-                              </div>
                               <button
                                 onClick={() => {
                                   setSelectedCourse(course.id);
                                   fetchLessons(course.id);
                                 }}
-                                className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                                className="text-blue-400 hover:text-blue-300 text-sm font-medium mt-2 transition"
                               >
                                 View Lessons →
                               </button>
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={() => openCourseModal(course)}
-                                className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
+                                className="text-white"
                               >
                                 <FontAwesomeIcon icon={faEdit} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
                                 onClick={() => deleteCourse(course.id)}
-                                className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
+                                className="text-white"
                               >
                                 <FontAwesomeIcon icon={faTrash} />
-                              </button>
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Courses without sections */}
-            {courses.filter(c => !c.section_id).length > 0 && (
-              <div className="mb-8">
-                <div className="bg-zinc-800/50 rounded-t-lg p-4 border border-zinc-700">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                    Uncategorized Courses
-                  </h3>
-                </div>
-                <div className="bg-zinc-800/30 rounded-b-lg border-l border-r border-b border-zinc-700 p-4">
-                  <div className="grid gap-3">
-                    {courses.filter(c => !c.section_id).map((course) => (
-                      <div key={course.id} className="bg-zinc-800 rounded-lg p-4 border border-zinc-700">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-lg">
-                              {course.title_en} / {course.title_ar}
-                            </h4>
-                            <button
-                              onClick={() => {
-                                setSelectedCourse(course.id);
-                                fetchLessons(course.id);
-                              }}
-                              className="text-blue-400 hover:text-blue-300 text-sm mt-2"
-                            >
-                              View Lessons →
-                            </button>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openCourseModal(course)}
-                              className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition"
-                            >
-                              <FontAwesomeIcon icon={faEdit} />
-                            </button>
-                            <button
-                              onClick={() => deleteCourse(course.id)}
-                              className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition"
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
@@ -1144,62 +1304,60 @@ const AdminDashboard = () => {
 
         {/* Courses Tab */}
         {activeTab === 'courses' && !selectedCourse && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Manage Courses</h2>
-              <button
-                onClick={() => openCourseModal()}
-                className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-xl transition font-medium border border-zinc-600"
-              >
-                <FontAwesomeIcon icon={faPlus} />
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Manage Courses</h2>
+              <Button onClick={() => openCourseModal()} className="text-white">
+                <FontAwesomeIcon icon={faPlus} className="mr-2" />
                 Add Course
-              </button>
+              </Button>
             </div>
 
             <div className="grid gap-4">
               {courses.map((course) => (
-                <div key={course.id} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{course.title_en} / {course.title_ar}</h3>
+                <Card key={course.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="text-lg font-semibold text-zinc-100">
+                            {course.title_en} / {course.title_ar}
+                          </h3>
+                          <Badge variant={course.is_open ? "default" : "secondary"}>
+                            {course.is_open ? 'Open' : 'Soon'}
+                          </Badge>
+                        </div>
                         <button
-                          onClick={() => toggleCourseStatus(course)}
-                          className={`px-3 py-1 rounded text-xs font-medium ${
-                            course.is_open
-                              ? 'bg-green-600/20 text-green-400'
-                              : 'bg-gray-600/20 text-gray-400'
-                          }`}
+                          onClick={() => {
+                            setSelectedCourse(course.id);
+                            fetchLessons(course.id);
+                          }}
+                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
                         >
-                          {course.is_open ? 'Open' : 'Soon'}
+                          View Lessons →
                         </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          setSelectedCourse(course.id);
-                          fetchLessons(course.id);
-                        }}
-                        className="text-gray-300 hover:text-white text-sm"
-                      >
-                        View Lessons →
-                      </button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openCourseModal(course)}
+                          className="text-white"
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deleteCourse(course.id)}
+                          className="text-white"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openCourseModal(course)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        onClick={() => deleteCourse(course.id)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -1270,429 +1428,440 @@ const AdminDashboard = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Registered Users</h2>
-              <input
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Registered Users</h2>
+              <Input
                 type="text"
                 placeholder="Search by #, email, or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-600 w-80"
+                className="w-80"
               />
             </div>
-            <div className="bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
-              <table className="w-full">
-                <thead className="bg-zinc-900">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">#</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Email</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Name</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Created</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Code Validated</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users
-                    .filter((user) => {
-                      if (!searchQuery) return true;
-                      const query = searchQuery.toLowerCase();
-                      return (
-                        user.userNumber.toString().includes(query) ||
-                        user.email.toLowerCase().includes(query) ||
-                        (user.full_name && user.full_name.toLowerCase().includes(query))
-                      );
-                    })
-                    .map((user) => (
-                    <tr key={user.id} className={`border-t border-zinc-700 ${user.is_banned ? 'bg-red-900/10' : ''}`}>
-                      <td className="px-4 py-3 text-gray-400 font-mono">#{user.userNumber}</td>
-                      <td className="px-4 py-3">{user.email}</td>
-                      <td className="px-4 py-3">{user.full_name || '-'}</td>
-                      <td className="px-4 py-3">{new Date(user.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3">
-                        {user.code_validated ? (
-                          <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
-                        ) : (
-                          <FontAwesomeIcon icon={faTimesCircle} className="text-red-500" />
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {user.is_banned ? (
-                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded text-xs border border-red-800">Banned</span>
-                        ) : (
-                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs border border-green-800">Active</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => banUser(user.id, user.email, user.is_banned)}
-                            className={`${user.is_banned ? 'text-green-500 hover:text-green-400' : 'text-zinc-400 hover:text-zinc-300'} transition`}
-                            title={user.is_banned ? 'Unban user' : 'Ban user'}
-                          >
-                            <FontAwesomeIcon icon={faBan} />
-                          </button>
-                          <button
-                            onClick={() => deleteUser(user.id, user.email)}
-                            className="text-zinc-400 hover:text-zinc-300 transition"
-                            title="Delete user"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px]">#</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-center">Code</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users
+                      .filter((user) => {
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        return (
+                          user.userNumber.toString().includes(query) ||
+                          user.email.toLowerCase().includes(query) ||
+                          (user.full_name && user.full_name.toLowerCase().includes(query))
+                        );
+                      })
+                      .map((user) => (
+                      <TableRow key={user.id} className={user.is_banned ? 'bg-red-950/20' : ''}>
+                        <TableCell className="font-mono text-zinc-400">#{user.userNumber}</TableCell>
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell>{user.full_name || '-'}</TableCell>
+                        <TableCell className="text-zinc-400">{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-center">
+                          {user.code_validated ? (
+                            <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                          ) : (
+                            <FontAwesomeIcon icon={faTimesCircle} className="text-red-500" />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.is_banned ? "destructive" : "default"}>
+                            {user.is_banned ? 'Banned' : 'Active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => banUser(user.id, user.email, user.is_banned)}
+                              title={user.is_banned ? 'Unban user' : 'Ban user'}
+                              className="text-white"
+                            >
+                              <FontAwesomeIcon 
+                                icon={faBan} 
+                                className={user.is_banned ? 'text-green-500' : 'text-zinc-400'}
+                              />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteUser(user.id, user.email)}
+                              title="Delete user"
+                              className="text-white"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="text-red-400" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Access Codes Tab */}
         {activeTab === 'codes' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Access Codes</h2>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Access Codes</h2>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => generateNewCodes(10)}
-                  className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-xl transition font-medium border border-zinc-600"
+                  className="text-white"
                 >
                   Generate 10 Codes
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={() => generateNewCodes(50)}
-                  className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-xl transition font-medium border border-zinc-600"
+                  className="text-white"
                 >
                   Generate 50 Codes
-                </button>
+                </Button>
               </div>
             </div>
 
-            <div className="bg-zinc-800/50 rounded-xl overflow-hidden border border-zinc-700">
-              <table className="w-full">
-                <thead className="bg-zinc-900/50">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Code</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Used By</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {accessCodes.map((code) => {
-                    const usedByUser = users.find(u => u.id === code.used_by);
-                    return (
-                      <tr key={code.id} className="border-t border-zinc-700">
-                        <td className="px-4 py-3 font-mono">{code.code}</td>
-                        <td className="px-4 py-3">
-                          {code.used ? (
-                            <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded text-xs border border-red-800">Used</span>
-                          ) : (
-                            <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs border border-green-800">Available</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {usedByUser ? (
-                            <span className="text-blue-400">User #{usedByUser.userNumber}</span>
-                          ) : (
-                            <span className="text-gray-500">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">{new Date(code.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Used By</TableHead>
+                      <TableHead>Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accessCodes.map((code) => {
+                      const usedByUser = users.find(u => u.id === code.used_by);
+                      return (
+                        <TableRow key={code.id}>
+                          <TableCell className="font-mono">{code.code}</TableCell>
+                          <TableCell>
+                            <Badge variant={code.used ? "destructive" : "default"}>
+                              {code.used ? 'Used' : 'Available'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {usedByUser ? (
+                              <span className="text-blue-400 font-medium">User #{usedByUser.userNumber}</span>
+                            ) : (
+                              <span className="text-zinc-500">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-zinc-400">{new Date(code.created_at).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Section Modal */}
-      {showSectionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md animate-slideUp">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingSection ? 'Edit Section' : 'Add Section'}</h3>
-              <button onClick={() => setShowSectionModal(false)} className="text-gray-400 hover:text-white">
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+        {/* Modals */}      {/* Section Modal */}
+      <Dialog open={showSectionModal} onOpenChange={setShowSectionModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingSection ? 'Edit Section' : 'Add Section'}</DialogTitle>
+            <DialogDescription>
+              {editingSection ? 'Update section information' : 'Create a new section for organizing courses'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="section-title-en">Title (English)</Label>
+              <Input
+                id="section-title-en"
+                value={sectionForm.title_en}
+                onChange={(e) => setSectionForm({...sectionForm, title_en: e.target.value})}
+                placeholder="e.g., Programming Courses"
+              />
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Title (English)</label>
-                <input
-                  type="text"
-                  value={sectionForm.title_en}
-                  onChange={(e) => setSectionForm({...sectionForm, title_en: e.target.value})}
-                  placeholder="e.g., Programming Courses"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Title (Arabic)</label>
-                <input
-                  type="text"
-                  value={sectionForm.title_ar}
-                  onChange={(e) => setSectionForm({...sectionForm, title_ar: e.target.value})}
-                  placeholder="دورات البرمجة"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Description (English)</label>
-                <input
-                  type="text"
-                  value={sectionForm.description_en}
-                  onChange={(e) => setSectionForm({...sectionForm, description_en: e.target.value})}
-                  placeholder="Optional description"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Description (Arabic)</label>
-                <input
-                  type="text"
-                  value={sectionForm.description_ar}
-                  onChange={(e) => setSectionForm({...sectionForm, description_ar: e.target.value})}
-                  placeholder="وصف اختياري"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Order Index</label>
-                <input
-                  type="number"
-                  value={sectionForm.order_index}
-                  onChange={(e) => setSectionForm({...sectionForm, order_index: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={saveSection}
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => setShowSectionModal(false)}
-                  disabled={saving}
-                  className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="section-title-ar">Title (Arabic)</Label>
+              <Input
+                id="section-title-ar"
+                value={sectionForm.title_ar}
+                onChange={(e) => setSectionForm({...sectionForm, title_ar: e.target.value})}
+                placeholder="دورات البرمجة"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="section-desc-en">Description (English)</Label>
+              <Input
+                id="section-desc-en"
+                value={sectionForm.description_en}
+                onChange={(e) => setSectionForm({...sectionForm, description_en: e.target.value})}
+                placeholder="Optional description"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="section-desc-ar">Description (Arabic)</Label>
+              <Input
+                id="section-desc-ar"
+                value={sectionForm.description_ar}
+                onChange={(e) => setSectionForm({...sectionForm, description_ar: e.target.value})}
+                placeholder="وصف اختياري"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="section-order">Order Index</Label>
+              <Input
+                id="section-order"
+                type="number"
+                value={sectionForm.order_index}
+                onChange={(e) => setSectionForm({...sectionForm, order_index: parseInt(e.target.value)})}
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSectionModal(false)}
+              disabled={saving}
+              className="text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveSection}
+              disabled={saving}
+              className="text-white"
+            >
+              {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />}
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Course Modal */}
-      {showCourseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md animate-slideUp">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingCourse ? 'Edit Course' : 'Add Course'}</h3>
-              <button onClick={() => setShowCourseModal(false)} className="text-gray-400 hover:text-white">
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+      <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingCourse ? 'Edit Course' : 'Add Course'}</DialogTitle>
+            <DialogDescription>
+              {editingCourse ? 'Update course information' : 'Create a new course'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="course-section">Section</Label>
+              <select
+                id="course-section"
+                value={courseForm.section_id || ''}
+                onChange={(e) => setCourseForm({...courseForm, section_id: e.target.value})}
+                className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-700"
+              >
+                <option value="">No Section (Uncategorized)</option>
+                {sections.map(section => (
+                  <option key={section.id} value={section.id}>
+                    {section.title_en}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Section</label>
-                <select
-                  value={courseForm.section_id || ''}
-                  onChange={(e) => setCourseForm({...courseForm, section_id: e.target.value})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                >
-                  <option value="">No Section (Uncategorized)</option>
-                  {sections.map(section => (
-                    <option key={section.id} value={section.id}>
-                      {section.title_en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Title (English)</label>
-                <input
-                  type="text"
-                  value={courseForm.title_en}
-                  onChange={(e) => setCourseForm({...courseForm, title_en: e.target.value})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Title (Arabic)</label>
-                <input
-                  type="text"
-                  value={courseForm.title_ar}
-                  onChange={(e) => setCourseForm({...courseForm, title_ar: e.target.value})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Order Index</label>
-                <input
-                  type="number"
-                  value={courseForm.order_index}
-                  onChange={(e) => setCourseForm({...courseForm, order_index: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={courseForm.is_open}
-                  onChange={(e) => setCourseForm({...courseForm, is_open: e.target.checked})}
-                  className="w-4 h-4"
-                />
-                <label className="text-sm">Course is Open (not Soon)</label>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={saveCourse}
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => setShowCourseModal(false)}
-                  disabled={saving}
-                  className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="course-title-en">Title (English)</Label>
+              <Input
+                id="course-title-en"
+                value={courseForm.title_en}
+                onChange={(e) => setCourseForm({...courseForm, title_en: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="course-title-ar">Title (Arabic)</Label>
+              <Input
+                id="course-title-ar"
+                value={courseForm.title_ar}
+                onChange={(e) => setCourseForm({...courseForm, title_ar: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="course-order">Order Index</Label>
+              <Input
+                id="course-order"
+                type="number"
+                value={courseForm.order_index}
+                onChange={(e) => setCourseForm({...courseForm, order_index: parseInt(e.target.value)})}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="course-open"
+                checked={courseForm.is_open}
+                onChange={(e) => setCourseForm({...courseForm, is_open: e.target.checked})}
+                className="w-4 h-4 rounded border-zinc-800 bg-zinc-900"
+              />
+              <Label htmlFor="course-open" className="font-normal cursor-pointer">Course is Open (not Soon)</Label>
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCourseModal(false)}
+              disabled={saving}
+              className="text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveCourse}
+              disabled={saving}
+              className="text-white"
+            >
+              {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />}
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lesson Modal */}
-      {showLessonModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingLesson ? 'Edit Lesson' : 'Add Lesson'}</h3>
-              <button onClick={() => setShowLessonModal(false)} className="text-gray-400 hover:text-white">
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+      <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingLesson ? 'Edit Lesson' : 'Add Lesson'}</DialogTitle>
+            <DialogDescription>
+              {editingLesson ? 'Update lesson information and content' : 'Create a new lesson with video and content'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="lesson-title-en">Title (English)</Label>
+              <Input
+                id="lesson-title-en"
+                value={lessonForm.title_en}
+                onChange={(e) => setLessonForm({...lessonForm, title_en: e.target.value})}
+              />
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Title (English)</label>
-                <input
-                  type="text"
-                  value={lessonForm.title_en}
-                  onChange={(e) => setLessonForm({...lessonForm, title_en: e.target.value})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Title (Arabic)</label>
-                <input
-                  type="text"
-                  value={lessonForm.title_ar}
-                  onChange={(e) => setLessonForm({...lessonForm, title_ar: e.target.value})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="lesson-title-ar">Title (Arabic)</Label>
+              <Input
+                id="lesson-title-ar"
+                value={lessonForm.title_ar}
+                onChange={(e) => setLessonForm({...lessonForm, title_ar: e.target.value})}
+              />
+            </div>
+            
+            {/* Video Upload Section */}
+            <div className="space-y-3">
+              <Label className="text-base">Video</Label>
               
-              {/* Video Upload Section */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold mb-2">Video</label>
-                
-                {!ffmpegLoaded && (
-                  <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3 mb-2">
-                    <p className="text-yellow-400 text-xs">
-                      <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+              {!ffmpegLoaded && (
+                <Card className="bg-yellow-950/20 border-yellow-800/30">
+                  <CardContent className="pt-3">
+                    <p className="text-yellow-500/90 text-xs flex items-center gap-2">
+                      <FontAwesomeIcon icon={faSpinner} spin />
                       Video converter loading... Non-MP4 videos will be uploaded as-is.
                     </p>
-                  </div>
-                )}
-                
-                {/* Upload from Computer */}
-                <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
-                  <label className="block text-sm text-zinc-400 mb-2">
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Upload from Computer */}
+              <Card className="bg-zinc-900/50">
+                <CardContent className="pt-4 space-y-3">
+                  <Label htmlFor="video-upload" className="text-sm text-zinc-400">
                     <FontAwesomeIcon icon={faVideo} className="mr-2" />
                     Upload from Computer (Any format - auto-converts to MP4)
-                  </label>
+                  </Label>
                   <input
+                    id="video-upload"
                     type="file"
                     accept="video/*"
                     onChange={handleVideoFileChange}
                     disabled={uploadingVideo}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-zinc-900 hover:file:bg-zinc-100 file:cursor-pointer"
                   />
                   {uploadingVideo && (
-                    <div className="mt-2">
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-blue-400">
                         <FontAwesomeIcon icon={faSpinner} spin />
                         <span>Processing... {uploadProgress}%</span>
                       </div>
-                      <div className="mt-1 w-full bg-zinc-800 rounded-full h-2">
+                      <div className="w-full bg-zinc-800 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
                       </div>
                     </div>
                   )}
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-xs text-zinc-500">
                     ✅ Supports all formats: MP4, MOV, AVI, WebM, etc. - Will work on all devices!
                   </p>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* OR Divider */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 border-t border-zinc-700"></div>
-                  <span className="text-xs text-zinc-500">OR</span>
-                  <div className="flex-1 border-t border-zinc-700"></div>
-                </div>
+              {/* OR Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-zinc-800"></div>
+                <span className="text-xs text-zinc-500">OR</span>
+                <div className="flex-1 border-t border-zinc-800"></div>
+              </div>
 
-                {/* External URL */}
-                <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
-                  <label className="block text-sm text-zinc-400 mb-2">External Video URL</label>
-                  <input
+              {/* External URL */}
+              <Card className="bg-zinc-900/50">
+                <CardContent className="pt-4 space-y-2">
+                  <Label htmlFor="video-url" className="text-sm text-zinc-400">External Video URL</Label>
+                  <Input
+                    id="video-url"
                     type="text"
                     value={lessonForm.video_url}
                     onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})}
                     placeholder="https://www.youtube.com/embed/... or direct link"
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                    className="text-sm"
                   />
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-xs text-zinc-500">
                     YouTube embed URLs or direct video links
                   </p>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Video Preview */}
-                {lessonForm.video_url && (
-                  <div className="border border-zinc-700 rounded-lg p-3 bg-zinc-900/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-zinc-400">Current Video:</span>
-                      <button
+              {/* Video Preview */}
+              {lessonForm.video_url && (
+                <Card className="bg-zinc-900/50">
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-zinc-400">Current Video:</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           setLessonForm({...lessonForm, video_url: ''});
                           setPreviewVideoUrl(null);
                         }}
-                        className="text-xs text-red-400 hover:text-red-300"
+                        className="text-xs text-red-400 hover:text-red-300 h-auto p-1"
                       >
                         <FontAwesomeIcon icon={faTimes} className="mr-1" />
                         Remove
-                      </button>
+                      </Button>
                     </div>
-                    <div className="bg-zinc-800 rounded overflow-hidden">
+                    <div className="bg-zinc-900 rounded-md overflow-hidden">
                       {previewVideoUrl ? (
                         <video 
                           controls 
@@ -1718,50 +1887,52 @@ const AdminDashboard = () => {
                         {lessonForm.video_url}
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-sm mb-1">Content (HTML)</label>
-                <textarea
-                  value={lessonForm.content_html}
-                  onChange={(e) => setLessonForm({...lessonForm, content_html: e.target.value})}
-                  rows="8"
-                  placeholder="<h2>Lesson content here...</h2>"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white font-mono text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Order Index</label>
-                <input
-                  type="number"
-                  value={lessonForm.order_index}
-                  onChange={(e) => setLessonForm({...lessonForm, order_index: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={saveLesson}
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => setShowLessonModal(false)}
-                  disabled={saving}
-                  className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="lesson-content">Content (HTML)</Label>
+              <Textarea
+                id="lesson-content"
+                value={lessonForm.content_html}
+                onChange={(e) => setLessonForm({...lessonForm, content_html: e.target.value})}
+                rows={8}
+                placeholder="<h2>Lesson content here...</h2>"
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lesson-order">Order Index</Label>
+              <Input
+                id="lesson-order"
+                type="number"
+                value={lessonForm.order_index}
+                onChange={(e) => setLessonForm({...lessonForm, order_index: parseInt(e.target.value)})}
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLessonModal(false)}
+              disabled={saving}
+              className="text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveLesson}
+              disabled={saving}
+              className="text-white"
+            >
+              {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />}
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Toast Notifications */}
       {toast && (
@@ -1785,129 +1956,242 @@ const AdminDashboard = () => {
       )}
 
       {/* Mini-Lesson Modal */}
-      {showMiniLessonModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fadeIn overflow-y-auto">
-          <div className="bg-zinc-800 rounded-xl p-6 w-full max-w-4xl animate-slideUp my-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingMiniLesson ? 'Edit Mini-Lesson' : 'Add Mini-Lesson'}</h3>
-              <button onClick={() => setShowMiniLessonModal(false)} className="text-gray-400 hover:text-white">
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+      <Dialog open={showMiniLessonModal} onOpenChange={setShowMiniLessonModal}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingMiniLesson ? 'Edit Mini-Lesson' : 'Add Mini-Lesson'}</DialogTitle>
+            <DialogDescription>
+              {editingMiniLesson ? 'Update mini-lesson information' : 'Create a new mini-lesson with optional video'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="mini-title-en">Title (English)</Label>
+              <Input
+                id="mini-title-en"
+                value={miniLessonForm.title_en}
+                onChange={(e) => setMiniLessonForm({...miniLessonForm, title_en: e.target.value})}
+                placeholder="e.g., What are functions?"
+              />
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Title (English)</label>
-                <input
-                  type="text"
-                  value={miniLessonForm.title_en}
-                  onChange={(e) => setMiniLessonForm({...miniLessonForm, title_en: e.target.value})}
-                  placeholder="e.g., What are functions?"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Title (Arabic)</label>
-                <input
-                  type="text"
-                  value={miniLessonForm.title_ar}
-                  onChange={(e) => setMiniLessonForm({...miniLessonForm, title_ar: e.target.value})}
-                  placeholder="ما هي الدوال؟"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="mini-title-ar">Title (Arabic)</Label>
+              <Input
+                id="mini-title-ar"
+                value={miniLessonForm.title_ar}
+                onChange={(e) => setMiniLessonForm({...miniLessonForm, title_ar: e.target.value})}
+                placeholder="ما هي الدوال؟"
+              />
+            </div>
+            
+            {/* Video Upload Section */}
+            <div className="space-y-3">
+              <Label className="text-base">Video (Optional)</Label>
               
-              {/* Video Upload Section (same as lesson modal) */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold mb-2">Video (Optional)</label>
-                
-                <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
-                  <label className="block text-sm text-zinc-400 mb-2">
+              <Card className="bg-zinc-900/50">
+                <CardContent className="pt-4 space-y-3">
+                  <Label htmlFor="mini-video-upload" className="text-sm text-zinc-400">
                     <FontAwesomeIcon icon={faVideo} className="mr-2" />
                     Upload from Computer (Auto-converts to MP4)
-                  </label>
+                  </Label>
                   <input
+                    id="mini-video-upload"
                     type="file"
                     accept="video/*"
                     onChange={handleVideoFileChange}
                     disabled={uploadingVideo}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-zinc-900 hover:file:bg-zinc-100 file:cursor-pointer"
                   />
                   {uploadingVideo && (
-                    <div className="mt-2">
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-blue-400">
                         <FontAwesomeIcon icon={faSpinner} spin />
                         <span>Processing... {uploadProgress}%</span>
                       </div>
-                      <div className="mt-1 w-full bg-zinc-800 rounded-full h-2">
+                      <div className="w-full bg-zinc-800 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
                       </div>
                     </div>
                   )}
-                </div>
+                </CardContent>
+              </Card>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 border-t border-zinc-700"></div>
-                  <span className="text-xs text-zinc-500">OR</span>
-                  <div className="flex-1 border-t border-zinc-700"></div>
-                </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-zinc-800"></div>
+                <span className="text-xs text-zinc-500">OR</span>
+                <div className="flex-1 border-t border-zinc-800"></div>
+              </div>
 
-                <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
-                  <label className="block text-sm text-zinc-400 mb-2">External Video URL</label>
-                  <input
+              <Card className="bg-zinc-900/50">
+                <CardContent className="pt-4 space-y-2">
+                  <Label htmlFor="mini-video-url" className="text-sm text-zinc-400">External Video URL</Label>
+                  <Input
+                    id="mini-video-url"
                     type="text"
                     value={miniLessonForm.video_url}
                     onChange={(e) => setMiniLessonForm({...miniLessonForm, video_url: e.target.value})}
                     placeholder="https://www.youtube.com/embed/..."
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                    className="text-sm"
                   />
-                </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Question Builder Section */}
+            <div className="space-y-3 border border-zinc-800 rounded-lg p-4 bg-zinc-900/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{t('questionBuilder')}</Label>
+                {!showQuestionBuilder && (
+                  <Button 
+                    type="button" 
+                    onClick={() => setShowQuestionBuilder(true)}
+                    size="sm"
+                    className="text-white"
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    {t('addQuestion')}
+                  </Button>
+                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Content (HTML)</label>
-                <textarea
-                  value={miniLessonForm.content_html}
-                  onChange={(e) => setMiniLessonForm({...miniLessonForm, content_html: e.target.value})}
-                  rows="6"
-                  placeholder="<p>Enter HTML content here...</p>"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white font-mono text-sm"
-                />
-              </div>
+              {showQuestionBuilder && (
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="question-text">{t('question')}</Label>
+                      <Input
+                        id="question-text"
+                        value={questionText}
+                        onChange={(e) => setQuestionText(e.target.value)}
+                        placeholder={t('enterQuestionHere')}
+                        className="text-sm"
+                      />
+                    </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Order Index</label>
-                <input
-                  type="number"
-                  value={miniLessonForm.order_index}
-                  onChange={(e) => setMiniLessonForm({...miniLessonForm, order_index: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-white"
-                />
-              </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">{t('answers')}</Label>
+                        <Button 
+                          type="button" 
+                          onClick={addAnswer}
+                          size="sm"
+                          variant="outline"
+                          className="text-white"
+                        >
+                          <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                          {t('addAnswer')}
+                        </Button>
+                      </div>
 
-              <div className="flex gap-2 mt-6">
-                <button
-                  onClick={saveMiniLesson}
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => setShowMiniLessonModal(false)}
-                  disabled={saving}
-                  className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-              </div>
+                      {questionAnswers.map((answer, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="correct-answer"
+                            checked={answer.isCorrect}
+                            onChange={() => setCorrectAnswer(index)}
+                            className="w-4 h-4 cursor-pointer accent-green-500"
+                          />
+                          <Input
+                            value={answer.text}
+                            onChange={(e) => updateAnswer(index, e.target.value)}
+                            placeholder={`${t('answer')} ${index + 1}`}
+                            className="flex-1 text-sm"
+                          />
+                          {questionAnswers.length > 1 && (
+                            <Button
+                              type="button"
+                              onClick={() => removeAnswer(index)}
+                              size="sm"
+                              variant="destructive"
+                              className="text-white"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={insertQuestion}
+                        className="flex-1 text-white"
+                      >
+                        {t('insertQuestion')}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setShowQuestionBuilder(false);
+                          setQuestionText('');
+                          setQuestionAnswers([{ text: '', isCorrect: false }]);
+                        }}
+                        variant="outline"
+                        className="text-white"
+                      >
+                        {t('cancel')}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mini-content">Add Content</Label>
+              <Textarea
+                id="mini-content"
+                value={miniLessonForm.content_html}
+                onChange={(e) => {
+                  // Preserve spaces up to 5 consecutive spaces
+                  let value = e.target.value;
+                  // Replace more than 5 consecutive spaces with exactly 5 spaces
+                  value = value.replace(/ {6,}/g, '     ');
+                  // Replace more than 5 consecutive newlines with exactly 5 newlines
+                  value = value.replace(/\n{6,}/g, '\n\n\n\n\n');
+                  setMiniLessonForm({...miniLessonForm, content_html: value});
+                }}
+                rows={6}
+                placeholder="Add your content here... (Spaces and line breaks preserved up to 5)"
+                className="font-mono text-sm whitespace-pre-wrap"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mini-order">Order Index</Label>
+              <Input
+                id="mini-order"
+                type="number"
+                value={miniLessonForm.order_index}
+                onChange={(e) => setMiniLessonForm({...miniLessonForm, order_index: parseInt(e.target.value)})}
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowMiniLessonModal(false)}
+              disabled={saving}
+              className="text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveMiniLesson}
+              disabled={saving}
+              className="text-white"
+            >
+              {saving && <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />}
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {toast && (
         <Toast
@@ -1925,6 +2209,7 @@ const AdminDashboard = () => {
           onCancel={() => setConfirmDialog(null)}
         />
       )}
+      </div>
     </div>
   );
 };

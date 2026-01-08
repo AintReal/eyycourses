@@ -66,85 +66,67 @@ const handleSignup = async (e) => {
 
 if (emailSent) {
   return (
-    <div className="min-h-screen h-screen bg-zinc-900 flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
 
-      <div 
-        className="absolute top-0 left-0 w-96 h-96 opacity-60" 
+      {/* Dashed Bottom Left Fade Grid */}
+      <div
+        className="absolute inset-0 z-0"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+            linear-gradient(to right, #27272a 1px, transparent 1px),
+            linear-gradient(to bottom, #27272a 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(-12deg)',
-          transformOrigin: 'top left'
-        }}
-      ></div>
-      
-
-      <div 
-        className="absolute top-0 right-0 w-96 h-96 opacity-60" 
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+          backgroundSize: "20px 20px",
+          backgroundPosition: "0 0, 0 0",
+          maskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
           `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(12deg)',
-          transformOrigin: 'top right'
-        }}
-      ></div>
-      
-
-      <div 
-        className="absolute bottom-0 left-0 w-96 h-96 opacity-60" 
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+          WebkitMaskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
           `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at bottom left, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at bottom left, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(12deg)',
-          transformOrigin: 'bottom left'
+          maskComposite: "intersect",
+          WebkitMaskComposite: "source-in",
         }}
-      ></div>
-      
-
-      <div 
-        className="absolute bottom-0 right-0 w-96 h-96 opacity-60" 
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
-          `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at bottom right, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at bottom right, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(-12deg)',
-          transformOrigin: 'bottom right'
-        }}
-      ></div>
-      
-      <div className="absolute top-0 right-0 w-96 h-96 bg-zinc-700/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-zinc-600/15 rounded-full blur-3xl"></div>
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-zinc-700/10 rounded-full blur-3xl"></div>
+      />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="backdrop-blur-sm rounded-2xl p-8 bg-zinc-900/40 border border-zinc-700/50">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 backdrop-blur-sm p-8 shadow-2xl">
           <div className="flex flex-col items-center text-center">
-            <h2 className="text-2xl font-bold text-white mb-3">Check your email</h2>
-            <p className="text-gray-400 text-sm mb-6">Please check your email for verification</p>
+            <h2 className="text-2xl font-semibold text-white mb-3">Check your email</h2>
+            <p className="text-sm text-zinc-400 mb-6">Please check your email for verification</p>
             <button 
-              className="w-full py-3.5 bg-white hover:bg-gray-100 active:bg-gray-200 font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-[15px]"
+              className="w-full py-2.5 bg-white hover:bg-zinc-100 text-zinc-900 font-semibold rounded-md transition-colors text-sm"
               onClick={handleReturningHome}
             >
-              <span className="text-white">Return to sign in</span>
+              Return to sign in
             </button>
           </div>
         </div>
@@ -154,116 +136,104 @@ if (emailSent) {
 }
 
 return (
-<div className="min-h-screen h-screen bg-zinc-900 flex items-center justify-center px-4 relative overflow-hidden">
+<div className="min-h-screen h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
 
-  <div 
-    className="absolute top-0 left-0 w-96 h-96 opacity-60" 
+  {/* Dashed Bottom Left Fade Grid */}
+  <div
+    className="absolute inset-0 z-0"
     style={{
       backgroundImage: `
-        linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+        linear-gradient(to right, #27272a 1px, transparent 1px),
+        linear-gradient(to bottom, #27272a 1px, transparent 1px)
       `,
-      backgroundSize: '40px 40px',
-      maskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-      WebkitMaskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-      transform: 'rotate(-12deg)',
-      transformOrigin: 'top left'
-    }}
-  ></div>
-  
-
-  <div 
-    className="absolute top-0 right-0 w-96 h-96 opacity-60" 
-    style={{
-      backgroundImage: `
-        linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+      backgroundSize: "20px 20px",
+      backgroundPosition: "0 0, 0 0",
+      maskImage: `
+        repeating-linear-gradient(
+          to right,
+          black 0px,
+          black 3px,
+          transparent 3px,
+          transparent 8px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          black 0px,
+          black 3px,
+          transparent 3px,
+          transparent 8px
+        ),
+        radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
       `,
-      backgroundSize: '40px 40px',
-      maskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-      WebkitMaskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-      transform: 'rotate(12deg)',
-      transformOrigin: 'top right'
-    }}
-  ></div>
-  
-
-  <div 
-    className="absolute bottom-0 left-0 w-96 h-96 opacity-60" 
-    style={{
-      backgroundImage: `
-        linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+      WebkitMaskImage: `
+        repeating-linear-gradient(
+          to right,
+          black 0px,
+          black 3px,
+          transparent 3px,
+          transparent 8px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          black 0px,
+          black 3px,
+          transparent 3px,
+          transparent 8px
+        ),
+        radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
       `,
-      backgroundSize: '40px 40px',
-      maskImage: 'radial-gradient(circle at bottom left, black 0%, black 30%, transparent 65%)',
-      WebkitMaskImage: 'radial-gradient(circle at bottom left, black 0%, black 30%, transparent 65%)',
-      transform: 'rotate(12deg)',
-      transformOrigin: 'bottom left'
+      maskComposite: "intersect",
+      WebkitMaskComposite: "source-in",
     }}
-  ></div>
-  
-
-  <div 
-    className="absolute bottom-0 right-0 w-96 h-96 opacity-60" 
-    style={{
-      backgroundImage: `
-        linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
-      `,
-      backgroundSize: '40px 40px',
-      maskImage: 'radial-gradient(circle at bottom right, black 0%, black 30%, transparent 65%)',
-      WebkitMaskImage: 'radial-gradient(circle at bottom right, black 0%, black 30%, transparent 65%)',
-      transform: 'rotate(-12deg)',
-      transformOrigin: 'bottom right'
-    }}
-  ></div>
-  
-  <div className="absolute top-0 right-0 w-96 h-96 bg-zinc-700/20 rounded-full blur-3xl"></div>
-  <div className="absolute bottom-0 left-0 w-80 h-80 bg-zinc-600/15 rounded-full blur-3xl"></div>
-  <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-zinc-700/10 rounded-full blur-3xl"></div>
+  />
   
   <div className="w-full max-w-md relative z-10">
-    <div className="text-center mb-10">
-      <div className="inline-block mb-3">
+    {/* Logo and Title */}
+    <div className="text-center mb-8">
+      <div className="inline-block mb-6">
         <img 
-          src="/undefinedlogo.png" 
-          alt="logo" 
-          className="h-32 w-auto mx-auto drop-shadow-lg"
+          src="/croppedlogo.png" 
+          alt="eyycourses" 
+          className="h-24 w-auto mx-auto"
         />
       </div>
-      <p className="text-gray-500 text-sm font-light">{t('startYourLearningJourney')}</p>
+      <p className="text-sm text-zinc-400">{t('startYourLearningJourney')}</p>
     </div>
 
-    <div className="backdrop-blur-sm rounded-2xl p-8 bg-zinc-900/40 border border-zinc-700/50">
+    {/* Card */}
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 backdrop-blur-sm p-8 shadow-2xl">
       
+      {/* Google Button */}
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 font-medium py-3.5 px-4 rounded-xl transition-all duration-200 mb-6 shadow-sm hover:shadow-md group"
+        className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-white font-medium py-2.5 px-4 rounded-md transition-colors"
       >
         <img src="/google.png" alt="Google" className="w-5 h-5" />
-        <span className="text-[15px] text-white">{t('continueWithGoogle')}</span>
+        <span className="text-sm">{t('continueWithGoogle')}</span>
       </button>
 
+      {/* Divider */}
       <div className="relative flex items-center justify-center my-6">
-        <div className="border-t border-zinc-700 grow"></div>
-        <span className="px-4 text-xs text-gray-500 font-medium uppercase tracking-wider">or</span>
-        <div className="border-t border-zinc-700 grow"></div>
+        <div className="border-t border-zinc-800 grow"></div>
+        <span className="px-4 text-xs text-zinc-500 uppercase tracking-wider">or</span>
+        <div className="border-t border-zinc-800 grow"></div>
       </div>
 
-      <form onSubmit={handleSignup} className="space-y-5">
+      {/* Form */}
+      <form onSubmit={handleSignup} className="space-y-4">
         
-        <div>
-          <label htmlFor="userName" className="block text-sm font-medium text-gray-300 mb-2.5">
+        {/* Name Field */}
+        <div className="space-y-2">
+          <label htmlFor="userName" className="block text-sm font-medium text-zinc-200">
             {t('name')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
-              <FontAwesomeIcon icon={faUser} className="text-gray-500 text-sm" />
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-3 rtl:pr-3 flex items-center pointer-events-none">
+              <FontAwesomeIcon icon={faUser} className="text-zinc-500 text-sm" />
             </div>
             <input 
-              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              className="w-full ltr:pl-10 rtl:pr-10 ltr:pr-3 rtl:pl-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition"
               type="text"
               name="name"
               id="userName" 
@@ -274,16 +244,17 @@ return (
           </div>
         </div>
 
-        <div>
-          <label htmlFor="userNewEmail" className="block text-sm font-medium text-gray-300 mb-2.5">
+        {/* Email Field */}
+        <div className="space-y-2">
+          <label htmlFor="userNewEmail" className="block text-sm font-medium text-zinc-200">
             {t('email')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
-              <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 text-sm" />
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-3 rtl:pr-3 flex items-center pointer-events-none">
+              <FontAwesomeIcon icon={faEnvelope} className="text-zinc-500 text-sm" />
             </div>
             <input 
-              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-4 rtl:pl-4 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              className="w-full ltr:pl-10 rtl:pr-10 ltr:pr-3 rtl:pl-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition"
               type="email"
               name="newEmail"
               id="userNewEmail" 
@@ -294,16 +265,17 @@ return (
           </div>
         </div>
 
-        <div>
-          <label htmlFor="userNewPassword" className="block text-sm font-medium text-gray-300 mb-2.5">
+        {/* Password Field */}
+        <div className="space-y-2">
+          <label htmlFor="userNewPassword" className="block text-sm font-medium text-zinc-200">
             {t('password')}
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
-              <FontAwesomeIcon icon={faLock} className="text-gray-500 text-sm" />
+            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-3 rtl:pr-3 flex items-center pointer-events-none">
+              <FontAwesomeIcon icon={faLock} className="text-zinc-500 text-sm" />
             </div>
             <input 
-              className="w-full ltr:pl-11 rtl:pr-11 ltr:pr-12 rtl:pl-12 py-3.5 bg-black/50 border border-zinc-700/70 rounded-xl text-white text-[15px] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition duration-200 hover:border-zinc-600"
+              className="w-full ltr:pl-10 rtl:pr-10 ltr:pr-12 rtl:pl-12 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition"
               type={showPassword ? "text" : "password"}
               name="newPassword"
               id="userNewPassword"
@@ -313,42 +285,45 @@ return (
             />
             <div
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 ltr:right-0 rtl:left-0 ltr:pr-4 rtl:pl-4 flex items-center cursor-pointer text-gray-500 hover:text-gray-300 transition-colors"
+              className="absolute inset-y-0 ltr:right-0 rtl:left-0 ltr:pr-3 rtl:pl-3 flex items-center cursor-pointer text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
             </div>
           </div>
         </div>
 
+        {/* Error Message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
-            <p className="text-red-400 text-sm font-medium text-center">{error}</p>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3">
+            <p className="text-red-400 text-sm text-center">{error}</p>
           </div>
         )}
 
+        {/* Submit Button */}
         <button 
-          className="w-full py-3.5 bg-white hover:bg-gray-100 active:bg-gray-200 font-semibold rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg hover:shadow-xl disabled:hover:shadow-lg text-[15px] mt-2"
+          className="w-full py-2.5 bg-white hover:bg-zinc-100 text-white font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-6"
           type="submit"
           disabled={loading}
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2 text-white">
+            <span className="flex items-center justify-center gap-2">
               <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
               {t('creatingAccount')}
             </span>
           ) : (
-            <span className="text-white">{t('signup')}</span>
+            <span>{t('signup')}</span>
           )}
         </button>
 
       </form>
 
+      {/* Sign In Link */}
       <div className="mt-6 text-center">
-        <p className="text-gray-400 text-sm">
+        <p className="text-sm text-zinc-400">
           {t('alreadyHaveAccount')}{' '}
           <Link 
             to="/signin" 
-            className="text-white font-semibold hover:text-gray-300 transition duration-200 underline decoration-gray-600 underline-offset-2 hover:decoration-gray-400"
+            className="text-zinc-200 font-medium hover:text-white transition-colors underline underline-offset-2"
           >
             {t('signin')}
           </Link>
@@ -358,26 +333,25 @@ return (
       </div>
     </div>
 
+    {/* Footer */}
     <div className="mt-8 text-center">
-      <p className="text-gray-600 text-xs">
+      <p className="text-zinc-500 text-xs">
         © 2026 eyycourses · {t('allRightsReserved')}
       </p>
       <div className="mt-2 flex items-center justify-center gap-3 text-xs">
-        <a 
-          href="#" 
-          onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
-          className="text-gray-600 hover:text-gray-400 transition duration-200 underline"
+        <button 
+          onClick={() => setShowPrivacyModal(true)}
+          className="text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           {t('privacyPolicyLink')}
-        </a>
-        <span className="text-gray-700">·</span>
-        <a 
-          href="#" 
-          onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
-          className="text-gray-600 hover:text-gray-400 transition duration-200 underline"
+        </button>
+        <span className="text-zinc-700">·</span>
+        <button 
+          onClick={() => setShowTermsModal(true)}
+          className="text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           {t('termsOfServiceLink')}
-        </a>
+        </button>
       </div>
     </div>
     

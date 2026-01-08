@@ -25,6 +25,10 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
@@ -142,161 +146,174 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold text-white">Analytics Dashboard</h2>
-        <button
-          onClick={fetchAnalytics}
-          className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
-        >
+        <Button onClick={fetchAnalytics} variant="secondary" className="text-white">
           Refresh Data
-        </button>
+        </Button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Users */}
-        <div className="bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-xl p-6 text-white shadow-lg border border-zinc-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-300 text-sm font-medium">Total Users</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.totalUsers}</h3>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zinc-400 text-sm font-medium">Total Users</p>
+                <h3 className="text-3xl font-bold text-white mt-2">{stats.totalUsers}</h3>
+              </div>
+              <FontAwesomeIcon icon={faUsers} className="text-4xl text-zinc-600" />
             </div>
-            <FontAwesomeIcon icon={faUsers} className="text-4xl text-zinc-500" />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Paid Users (with codes) */}
-        <div className="bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-xl p-6 text-white shadow-lg border border-zinc-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-300 text-sm font-medium">Paid Users</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.usersWithCodes}</h3>
-              <p className="text-zinc-400 text-xs mt-1">Access codes validated</p>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zinc-400 text-sm font-medium">Paid Users</p>
+                <h3 className="text-3xl font-bold text-white mt-2">{stats.usersWithCodes}</h3>
+                <p className="text-zinc-500 text-xs mt-1">Access codes validated</p>
+              </div>
+              <FontAwesomeIcon icon={faTicket} className="text-4xl text-zinc-600" />
             </div>
-            <FontAwesomeIcon icon={faTicket} className="text-4xl text-zinc-500" />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Total Revenue */}
-        <div className="bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-xl p-6 text-white shadow-lg border border-zinc-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-300 text-sm font-medium">Total Revenue</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.totalRevenue} USD</h3>
-              <p className="text-zinc-400 text-xs mt-1">38 USD per user</p>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zinc-400 text-sm font-medium">Total Revenue</p>
+                <h3 className="text-3xl font-bold text-white mt-2">{stats.totalRevenue} USD</h3>
+                <p className="text-zinc-500 text-xs mt-1">38 USD per user</p>
+              </div>
+              <FontAwesomeIcon icon={faDollarSign} className="text-4xl text-zinc-600" />
             </div>
-            <FontAwesomeIcon icon={faDollarSign} className="text-4xl text-zinc-500" />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Total Courses */}
-        <div className="bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-xl p-6 text-white shadow-lg border border-zinc-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-300 text-sm font-medium">Active Courses</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.totalCourses}</h3>
-              <p className="text-zinc-400 text-xs mt-1">{stats.totalLessons} lessons total</p>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zinc-400 text-sm font-medium">Active Courses</p>
+                <h3 className="text-3xl font-bold text-white mt-2">{stats.totalCourses}</h3>
+                <p className="text-zinc-500 text-xs mt-1">{stats.totalLessons} lessons total</p>
+              </div>
+              <FontAwesomeIcon icon={faGraduationCap} className="text-4xl text-zinc-600" />
             </div>
-            <FontAwesomeIcon icon={faGraduationCap} className="text-4xl text-zinc-500" />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Signups Chart */}
-        <div className="bg-zinc-800 rounded-xl p-6 border border-zinc-700">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faChartLine} className="text-zinc-400" />
-            User Signups (Last 7 Days)
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={userActivity}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-              <XAxis dataKey="date" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#27272a', border: '1px solid #52525b', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Line type="monotone" dataKey="signups" stroke="#71717a" strokeWidth={3} dot={{ fill: '#52525b', r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <FontAwesomeIcon icon={faChartLine} className="text-zinc-400" />
+              User Signups (Last 7 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={userActivity}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                <XAxis dataKey="date" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#27272a', border: '1px solid #52525b', borderRadius: '8px' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Line type="monotone" dataKey="signups" stroke="#71717a" strokeWidth={3} dot={{ fill: '#52525b', r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
         {/* Course Revenue Chart */}
-        <div className="bg-zinc-800 rounded-xl p-6 border border-zinc-700">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faDollarSign} className="text-zinc-400" />
-            Revenue by Course
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={courseStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-              <XAxis dataKey="name" stroke="#9ca3af" angle={-45} textAnchor="end" height={100} />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#27272a', border: '1px solid #52525b', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Bar dataKey="revenue" fill="#52525b" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <FontAwesomeIcon icon={faDollarSign} className="text-zinc-400" />
+              Revenue by Course
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={courseStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                <XAxis dataKey="name" stroke="#9ca3af" angle={-45} textAnchor="end" height={100} />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#27272a', border: '1px solid #52525b', borderRadius: '8px' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Bar dataKey="revenue" fill="#52525b" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Users Table */}
-      <div className="bg-zinc-800 rounded-xl border border-zinc-700 overflow-hidden">
-        <div className="p-6 border-b border-zinc-700">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+      <Card className="bg-zinc-900/50 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
             <FontAwesomeIcon icon={faEye} className="text-zinc-400" />
             Recent Users
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Access Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-700">
-              {recentUsers.map((user, index) => (
-                <tr key={user.id} className="hover:bg-zinc-750 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Access Code</TableHead>
+                <TableHead>Revenue</TableHead>
+                <TableHead>Joined</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold">
                         {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-white font-medium">{user.full_name || 'No name'}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-300">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="text-zinc-300">{user.email}</TableCell>
+                  <TableCell>
                     {user.code_validated ? (
-                      <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                      <Badge variant="default" className="bg-green-600 text-white">
                         ✓ Validated
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+                      <Badge variant="destructive">
                         Pending
-                      </span>
+                      </Badge>
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-white font-semibold">
+                  </TableCell>
+                  <TableCell className="text-white font-semibold">
                     {user.code_validated ? `SAR 38` : 'SAR 0'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-400">
+                  </TableCell>
+                  <TableCell className="text-zinc-400">
                     {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

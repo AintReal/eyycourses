@@ -70,7 +70,28 @@ const resources = {
       "termsTermination": "Termination",
       "termsTerminationDesc": "We may terminate or suspend your account and access to the service immediately, without prior notice, for any breach of these Terms.",
       "termsContactInfo": "Contact Information",
-      "termsContactDesc": "For any questions about these Terms, please contact us at support@eyycourses.com"
+      "termsContactDesc": "For any questions about these Terms, please contact us at support@eyycourses.com",
+      
+      "quizQuestions": "Quiz Questions",
+      "selectAnswersAndSubmit": "Select your answers and submit when ready",
+      "submitAllAnswers": "Submit All Answers",
+      "resubmitAnswers": "Resubmit Answers",
+      "correct": "Correct",
+      "wrong": "Wrong",
+      "questionBuilder": "Question Builder",
+      "addQuestion": "Add Question",
+      "question": "Question",
+      "enterQuestionHere": "Enter your question here...",
+      "answers": "Answers",
+      "addAnswer": "Add Answer",
+      "answer": "Answer",
+      "insertQuestion": "Insert Question",
+      "cancel": "Cancel",
+      "pleaseEnterQuestion": "Please enter a question",
+      "pleaseAddTwoAnswers": "Please add at least 2 answers",
+      "pleaseSelectCorrectAnswer": "Please select the correct answer",
+      "questionAddedSuccessfully": "Question added successfully!",
+      "noContentYet": "Content coming soon..."
     }
   },
   ar: {
@@ -141,7 +162,28 @@ const resources = {
       "termsTermination": "الإنهاء",
       "termsTerminationDesc": "يجوز لنا إنهاء أو تعليق حسابك والوصول إلى الخدمة فوراً، دون إشعار مسبق، لأي انتهاك لهذه الشروط.",
       "termsContactInfo": "معلومات الاتصال",
-      "termsContactDesc": "لأي أسئلة حول هذه الشروط، يرجى الاتصال بنا على support@eyycourses.com"
+      "termsContactDesc": "لأي أسئلة حول هذه الشروط، يرجى الاتصال بنا على support@eyycourses.com",
+      
+      "quizQuestions": "أسئلة الاختبار",
+      "selectAnswersAndSubmit": "اختر إجاباتك وقدمها عندما تكون جاهزاً",
+      "submitAllAnswers": "إرسال جميع الإجابات",
+      "resubmitAnswers": "إعادة إرسال الإجابات",
+      "correct": "صحيح",
+      "wrong": "خطأ",
+      "questionBuilder": "منشئ الأسئلة",
+      "addQuestion": "إضافة سؤال",
+      "question": "السؤال",
+      "enterQuestionHere": "أدخل سؤالك هنا...",
+      "answers": "الإجابات",
+      "addAnswer": "إضافة إجابة",
+      "answer": "الإجابة",
+      "insertQuestion": "إدراج السؤال",
+      "cancel": "إلغاء",
+      "pleaseEnterQuestion": "يرجى إدخال سؤال",
+      "pleaseAddTwoAnswers": "يرجى إضافة إجابتين على الأقل",
+      "pleaseSelectCorrectAnswer": "يرجى اختيار الإجابة الصحيحة",
+      "questionAddedSuccessfully": "تمت إضافة السؤال بنجاح!",
+      "noContentYet": "المحتوى قريباً..."
     }
   }
 };
