@@ -123,7 +123,7 @@ if (emailSent) {
             <h2 className="text-2xl font-semibold text-white mb-3">Check your email</h2>
             <p className="text-sm text-zinc-400 mb-6">Please check your email for verification</p>
             <button 
-              className="w-full py-2.5 bg-white hover:bg-zinc-100 text-zinc-900 font-semibold rounded-md transition-colors text-sm"
+              className="w-full py-2.5 bg-white hover:bg-zinc-100 text-white font-semibold rounded-md transition-colors text-sm"
               onClick={handleReturningHome}
             >
               Return to sign in
