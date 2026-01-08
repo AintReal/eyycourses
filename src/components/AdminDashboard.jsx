@@ -19,7 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '../../node_modules/react-i18next';
 
 const AdminDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [accessCodes, setAccessCodes] = useState([]);
   const [sections, setSections] = useState([]);
@@ -42,7 +43,6 @@ const AdminDashboard = () => {
   const [editingMiniLesson, setEditingMiniLesson] = useState(null);
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
-  const navigate = useNavigate();
   
   const ffmpegRef = useRef(new FFmpeg());
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
@@ -84,11 +84,22 @@ const AdminDashboard = () => {
   const [selectedVideoFile, setSelectedVideoFile] = useState(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
 
   // Question builder state
   const [showQuestionBuilder, setShowQuestionBuilder] = useState(false);
   const [questionText, setQuestionText] = useState('');
   const [questionAnswers, setQuestionAnswers] = useState([{ text: '', isCorrect: false }]);
+
+  // Force English and LTR for Admin Dashboard
+  useEffect(() => {
+    i18n.changeLanguage('en');
+    document.documentElement.setAttribute('lang', 'en');
+    document.documentElement.setAttribute('dir', 'ltr');
+  }, [i18n]);
 
   useEffect(() => {
     loadFFmpeg();
@@ -1430,12 +1441,36 @@ const AdminDashboard = () => {
         {activeTab === 'users' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Registered Users</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold text-white">Registered Users</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400 text-sm">Show:</span>
+                  <div className="flex gap-1">
+                    {[10, 20, 50, 100].map((count) => (
+                      <Button
+                        key={count}
+                        variant={usersPerPage === count ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setUsersPerPage(count);
+                          setCurrentPage(1);
+                        }}
+                        className="text-white"
+                      >
+                        {count}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <Input
                 type="text"
                 placeholder="Search by #, email, or name..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to page 1 when searching
+                }}
                 className="w-80"
               />
             </div>
@@ -1454,8 +1489,9 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users
-                      .filter((user) => {
+                    {(() => {
+                      // Filter users based on search query
+                      const filteredUsers = users.filter((user) => {
                         if (!searchQuery) return true;
                         const query = searchQuery.toLowerCase();
                         return (
@@ -1463,8 +1499,14 @@ const AdminDashboard = () => {
                           user.email.toLowerCase().includes(query) ||
                           (user.full_name && user.full_name.toLowerCase().includes(query))
                         );
-                      })
-                      .map((user) => (
+                      });
+
+                      // Calculate pagination
+                      const indexOfLastUser = currentPage * usersPerPage;
+                      const indexOfFirstUser = indexOfLastUser - usersPerPage;
+                      const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+                      return currentUsers.map((user) => (
                       <TableRow key={user.id} className={user.is_banned ? 'bg-red-950/20' : ''}>
                         <TableCell className="font-mono text-zinc-400">#{user.userNumber}</TableCell>
                         <TableCell className="font-medium">{user.email}</TableCell>
@@ -1508,11 +1550,66 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Pagination */}
+            {(() => {
+              const filteredUsers = users.filter((user) => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  user.userNumber.toString().includes(query) ||
+                  user.email.toLowerCase().includes(query) ||
+                  (user.full_name && user.full_name.toLowerCase().includes(query))
+                );
+              });
+              const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+              
+              if (totalPages <= 1) return null;
+
+              return (
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="text-white"
+                  >
+                    Previous
+                  </Button>
+                  
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="text-white w-10"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="text-white"
+                  >
+                    Next
+                  </Button>
+                </div>
+              );
+            })()}
           </div>
         )}
 

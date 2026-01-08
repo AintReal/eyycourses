@@ -171,6 +171,13 @@ const Dashboard = () => {
   const [videoUrl, setVideoUrl] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Ensure Arabic and RTL for regular Dashboard
+  useEffect(() => {
+    i18n.changeLanguage('ar');
+    document.documentElement.setAttribute('lang', 'ar');
+    document.documentElement.setAttribute('dir', 'rtl');
+  }, [i18n]);
+
   useEffect(() => {
     checkBanStatus();
     fetchCourses();
@@ -454,7 +461,7 @@ const Dashboard = () => {
         <div className="p-6">
           {/* Header */}
           <div className="mb-8">
-            <h2 className="text-white text-2xl font-bold mb-2">eyycourses</h2>
+            <h2 className="text-white text-2xl font-bold mb-2"> <img className="h-12 w-auto" src="/public/croppedlogo.png" alt="logo" /> eyycourses</h2>
             <p className="text-zinc-500 text-sm truncate">{session?.user?.email}</p>
           </div>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,7 +9,7 @@ import TermsModal from './TermsModal';
 import { useTranslation } from '../../node_modules/react-i18next';
 
 const Signup = () => {
-const { t } = useTranslation();
+const { t, i18n } = useTranslation();
 
 const [name, setName] = useState("")
 const [email, setEmail] = useState("")
@@ -23,6 +23,13 @@ const [showTermsModal, setShowTermsModal] = useState(false)
 
 const {signUpNewUser, signInWithGoogle} = UserAuth()
 const navigate = useNavigate()
+
+// Ensure Arabic and RTL for Signup
+useEffect(() => {
+  i18n.changeLanguage('ar');
+  document.documentElement.setAttribute('lang', 'ar');
+  document.documentElement.setAttribute('dir', 'rtl');
+}, [i18n]);
 
 const handleReturningHome = (e) =>{
   e.preventDefault()

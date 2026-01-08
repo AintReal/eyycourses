@@ -14,6 +14,12 @@ const AdminLogin = () => {
   const [lockoutTime, setLockoutTime] = useState(null);
   const navigate = useNavigate();
 
+  // Force English and LTR for Admin Login
+  useEffect(() => {
+    document.documentElement.setAttribute('lang', 'en');
+    document.documentElement.setAttribute('dir', 'ltr');
+  }, []);
+
   useEffect(() => {
     checkAdminSession();
     

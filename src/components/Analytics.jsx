@@ -29,16 +29,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const usersPerPage = 10;
   const [stats, setStats] = useState({
     totalUsers: 0,
     usersWithCodes: 0,
     totalRevenue: 0,
     totalCourses: 0,
     totalLessons: 0,
-    revenuePerCourse: 38, // SAR per access code
+    revenuePerCourse: 189, // SAR per access code
   });
   const [userActivity, setUserActivity] = useState([]);
   const [courseStats, setCourseStats] = useState([]);
@@ -80,7 +84,7 @@ const Analytics = () => {
 
       // Calculate stats
       const usersWithValidatedCodes = users?.filter(u => u.code_validated) || [];
-      const totalRevenue = usersWithValidatedCodes.length * 38;
+      const totalRevenue = usersWithValidatedCodes.length * 189;
 
       setStats({
         totalUsers: users?.length || 0,
@@ -88,7 +92,7 @@ const Analytics = () => {
         totalRevenue: totalRevenue,
         totalCourses: courses?.length || 0,
         totalLessons: lessons?.length || 0,
-        revenuePerCourse: 38,
+        revenuePerCourse: 189,
       });
 
       // Course enrollment stats
@@ -96,8 +100,9 @@ const Analytics = () => {
         const enrolledUsers = usersWithValidatedCodes.length; // All validated users have access to all courses for now
         return {
           name: course.title_en.substring(0, 20) + '...',
+          fullName: course.title_en,
           students: enrolledUsers,
-          revenue: enrolledUsers * 38,
+          revenue: enrolledUsers * 189,
         };
       }) || [];
       setCourseStats(courseStatsData);
@@ -186,8 +191,8 @@ const Analytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-zinc-400 text-sm font-medium">Total Revenue</p>
-                <h3 className="text-3xl font-bold text-white mt-2">{stats.totalRevenue} USD</h3>
-                <p className="text-zinc-500 text-xs mt-1">38 USD per user</p>
+                <h3 className="text-3xl font-bold text-white mt-2">{stats.totalRevenue} SAR</h3>
+                <p className="text-zinc-500 text-xs mt-1">189 SAR per user</p>
               </div>
               <FontAwesomeIcon icon={faDollarSign} className="text-4xl text-zinc-600" />
             </div>
@@ -242,20 +247,42 @@ const Analytics = () => {
               <FontAwesomeIcon icon={faDollarSign} className="text-zinc-400" />
               Revenue by Course
             </CardTitle>
+            <CardDescription className="text-zinc-400">
+              Total revenue generated per course
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={courseStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                <XAxis dataKey="name" stroke="#9ca3af" angle={-45} textAnchor="end" height={100} />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#27272a', border: '1px solid #52525b', borderRadius: '8px' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Bar dataKey="revenue" fill="#52525b" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-4">
+              {courseStats.map((course, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-zinc-300 font-medium truncate max-w-[200px]" title={course.fullName}>
+                      {course.name}
+                    </span>
+                    <span className="text-zinc-400">
+                      {course.revenue} SAR
+                    </span>
+                  </div>
+                  <div className="w-full bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-zinc-600 to-zinc-500 h-2.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min((course.revenue / Math.max(...courseStats.map(c => c.revenue))) * 100, 100)}%`
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span>{course.students} students</span>
+                    <span>{((course.revenue / stats.totalRevenue) * 100).toFixed(1)}% of total</span>
+                  </div>
+                </div>
+              ))}
+              {courseStats.length === 0 && (
+                <div className="text-center text-zinc-500 py-8">
+                  No course data available
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -263,10 +290,22 @@ const Analytics = () => {
       {/* Recent Users Table */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <FontAwesomeIcon icon={faEye} className="text-zinc-400" />
-            Recent Users
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <FontAwesomeIcon icon={faEye} className="text-zinc-400" />
+              Recent Users
+            </CardTitle>
+            <Input
+              type="text"
+              placeholder="Search by email or name..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-80"
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -280,7 +319,23 @@ const Analytics = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentUsers.map((user) => (
+              {(() => {
+                // Filter users based on search
+                const filteredUsers = recentUsers.filter((user) => {
+                  if (!searchQuery) return true;
+                  const query = searchQuery.toLowerCase();
+                  return (
+                    user.email.toLowerCase().includes(query) ||
+                    (user.full_name && user.full_name.toLowerCase().includes(query))
+                  );
+                });
+
+                // Paginate
+                const indexOfLastUser = currentPage * usersPerPage;
+                const indexOfFirstUser = indexOfLastUser - usersPerPage;
+                const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+                return currentUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -303,15 +358,70 @@ const Analytics = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-white font-semibold">
-                    {user.code_validated ? `SAR 38` : 'SAR 0'}
+                    {user.code_validated ? `189 SAR` : '0 SAR'}
                   </TableCell>
-                  <TableCell className="text-zinc-400">
-                    {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <TableCell className="text-zinc-400">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </TableCell>
                 </TableRow>
-              ))}
+                ));
+              })()}
             </TableBody>
           </Table>
+        </CardContent>
+        
+        {/* Pagination */}
+        <CardContent className="pt-4">
+          {(() => {
+            const filteredUsers = recentUsers.filter((user) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              return (
+                user.email.toLowerCase().includes(query) ||
+                (user.full_name && user.full_name.toLowerCase().includes(query))
+              );
+            });
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            
+            if (totalPages <= 1) return null;
+
+            return (
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="text-white"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="text-white w-10"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="text-white"
+                >
+                  Next
+                </Button>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
