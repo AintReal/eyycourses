@@ -33,6 +33,8 @@ app.post('/api/convert-video', async (req, res) => {
 
   ffmpeg.setFfmpegPath(ffmpegPath);
 
+  app.get('/health', (req, res) => res.status(200).send('ok'));
+
   function sanitizeFilename(filename) {
     return filename.split('/').pop().replace(/[^a-zA-Z0-9_.-]/g, '');
   }
