@@ -45,12 +45,14 @@ app.post('/api/convert-video', async (req, res) => {
     // Convert video to H.264 Main + yuv420p + AAC
     const outputPath = `/tmp/converted.mp4`;
     ffmpeg(inputPath)
-      .outputOptions([
+            .outputOptions([
         '-c:v libx264',
         '-profile:v main',
         '-pix_fmt yuv420p',
         '-c:a aac',
-        '-movflags +faststart'
+        '-movflags +faststart',
+        '-threads 1',
+        '-bufsize 1M'
       ])
       .save(outputPath)
       .on('end', async () => {
