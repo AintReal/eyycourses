@@ -114,10 +114,25 @@ const AdminDashboard = () => {
 
       if (lessonForm.video_url.startsWith('lesson-videos/')) {
         try {
-          const filePath = lessonForm.video_url.replace('lesson-videos/', '');
+          const originalPath = lessonForm.video_url.replace('lesson-videos/', '');
+          const originalName = originalPath.split('/').pop();
+          const convertedPath = originalName ? `converted/${originalName}` : null;
+
+          if (convertedPath) {
+            const convertedRes = await supabase.storage
+              .from('lesson-videos')
+              .createSignedUrl(convertedPath, 3600);
+
+            if (!convertedRes.error && convertedRes.data?.signedUrl) {
+              setPreviewVideoUrl(convertedRes.data.signedUrl);
+              return;
+            }
+          }
+
+          // Fallback to original
           const { data, error } = await supabase.storage
             .from('lesson-videos')
-            .createSignedUrl(filePath, 3600);
+            .createSignedUrl(originalPath, 3600);
 
           if (error) throw error;
           setPreviewVideoUrl(data.signedUrl);

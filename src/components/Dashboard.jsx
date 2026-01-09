@@ -211,13 +211,29 @@ const Dashboard = () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Generate signed URL for private videos
+      // Prefer the server-converted version first: lesson-videos/converted/<filename>
       if (currentContent.video_url.startsWith('lesson-videos/')) {
         try {
-          const filePath = currentContent.video_url.replace('lesson-videos/', '');
-          
+          const originalPath = currentContent.video_url.replace('lesson-videos/', '');
+          const originalName = originalPath.split('/').pop();
+
+          const convertedPath = originalName ? `converted/${originalName}` : null;
+
+          if (convertedPath) {
+            const convertedRes = await supabase.storage
+              .from('lesson-videos')
+              .createSignedUrl(convertedPath, 3600);
+
+            if (!convertedRes.error && convertedRes.data?.signedUrl) {
+              setVideoUrl(convertedRes.data.signedUrl);
+              return;
+            }
+          }
+
+          // Fallback to original (may be HEVC and not play on some Windows devices)
           const { data, error } = await supabase.storage
             .from('lesson-videos')
-            .createSignedUrl(filePath, 3600);
+            .createSignedUrl(originalPath, 3600);
 
           if (error) throw error;
           setVideoUrl(data.signedUrl);
