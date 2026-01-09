@@ -46,15 +46,15 @@ app.post('/api/convert-video', async (req, res) => {
     const outputPath = `/tmp/converted.mp4`;
     ffmpeg(inputPath)
             .outputOptions([
-        '-c:v libx264',
-        '-profile:v main',
-        '-pix_fmt yuv420p',
-        '-c:a aac',
-        '-movflags +faststart',
-        '-threads 1',
-        '-bufsize 1M'
-      ])
-      .save(outputPath)
+  '-c:v libx264',
+  '-profile:v main',
+  '-pix_fmt yuv420p',
+  '-c:a aac',
+  '-movflags +faststart',
+  '-preset ultrafast',
+  '-threads 1',
+  '-bufsize 1M'
+])
       .on('end', async () => {
         // Upload converted video back to Supabase Storage
         const fileBuffer = fs.readFileSync(outputPath);
