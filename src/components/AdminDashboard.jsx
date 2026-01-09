@@ -6,8 +6,7 @@ import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faP
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import Analytics from './Analytics';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+// Browser-side video conversion removed (handled server-side via webhook -> Railway)
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -44,8 +43,7 @@ const AdminDashboard = () => {
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   
-  const ffmpegRef = useRef(new FFmpeg());
-  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+  // Server-side conversion pipeline; no browser FFmpeg state needed
 
   const [sectionForm, setSectionForm] = useState({
     title_en: '',
@@ -101,25 +99,7 @@ const AdminDashboard = () => {
     document.documentElement.setAttribute('dir', 'ltr');
   }, [i18n]);
 
-  useEffect(() => {
-    loadFFmpeg();
-  }, []);
-
-  const loadFFmpeg = async () => {
-    try {
-      const ffmpeg = ffmpegRef.current;
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-      await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      });
-      setFfmpegLoaded(true);
-      console.log('✅ FFmpeg loaded - ready to convert to H.264 Main + yuv420p');
-    } catch (error) {
-      console.error('Failed to load FFmpeg:', error);
-      setFfmpegLoaded(false);
-    }
-  };
+  // Browser-side FFmpeg loading removed
 
   useEffect(() => {
     checkAdminAuth();
@@ -495,47 +475,7 @@ const AdminDashboard = () => {
     setShowLessonModal(true);
   };
 
-  const convertVideoToMP4 = async (file) => {
-    if (!ffmpegLoaded) {
-      throw new Error('Video converter not ready. Please try again.');
-    }
-
-    try {
-      const ffmpeg = ffmpegRef.current;
-      
-      console.log('🎬 Converting to web-safe format (H.264 Main + AAC + yuv420p)...');
-      
-      // Write input file
-      await ffmpeg.writeFile('input', await fetchFile(file));
-      
-      // THE ONLY SAFE WEB COMBO - guaranteed browser compatibility
-      await ffmpeg.exec([
-        '-i', 'input',
-        '-c:v', 'libx264',           // Force H.264 (NOT HEVC)
-        '-profile:v', 'main',        // Main profile (baseline or main)
-        '-level', '4.0',             // Level 4.0
-        '-pix_fmt', 'yuv420p',       // REQUIRED for Windows + mobile
-        '-movflags', '+faststart',   // Streaming before full download
-        '-c:a', 'aac',               // AAC audio (universal)
-        '-b:a', '128k',              // Audio bitrate
-        'output.mp4'
-      ]);
-      
-      // Read output file
-      const data = await ffmpeg.readFile('output.mp4');
-      
-      console.log('✅ Converted to H.264 Main + yuv420p + AAC');
-      
-      // Clean up
-      await ffmpeg.deleteFile('input');
-      await ffmpeg.deleteFile('output.mp4');
-      
-      return new Blob([data.buffer], { type: 'video/mp4' });
-    } catch (error) {
-      console.error('❌ Conversion failed:', error);
-      throw error;
-    }
-  };
+  // Browser-side convertVideoToMP4 removed
 
   const uploadVideoToStorage = async (file) => {
     try {
@@ -554,21 +494,9 @@ const AdminDashboard = () => {
 
       setUploadProgress(20);
 
-      // Always convert to H.264 Main + yuv420p + AAC for universal compatibility
-      let uploadFile = file;
-      
-      if (ffmpegLoaded) {
-        setToast({ message: 'Converting to web-safe format (H.264 + AAC)...', type: 'info' });
-        try {
-          uploadFile = await convertVideoToMP4(file);
-          setToast({ message: 'Converted! Now works on all browsers. Uploading...', type: 'success' });
-        } catch (conversionError) {
-          console.error('Conversion failed:', conversionError);
-          setToast({ message: 'Warning: Conversion failed. May not work on Windows.', type: 'warning' });
-        }
-      } else {
-        setToast({ message: 'Warning: Converter not ready. May not work on all devices.', type: 'warning' });
-      }
+      // Upload original file; server-side conversion will produce a web-safe MP4.
+      // (Supabase DB webhook -> Railway converts to H.264 Main + yuv420p + AAC.)
+      const uploadFile = file;
 
       setUploadProgress(50);
 
@@ -1867,27 +1795,14 @@ const AdminDashboard = () => {
             <div className="space-y-3">
               <Label className="text-base">Video</Label>
               
-              {!ffmpegLoaded && (
-                <Card className="bg-yellow-950/20 border-yellow-800/30">
-                  <CardContent className="pt-3">
-                    <p className="text-yellow-500/90 text-xs flex items-center gap-2">
-                      <FontAwesomeIcon icon={faSpinner} spin />
-                      Video converter loading... Please wait for full compatibility.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {ffmpegLoaded && (
-                <Card className="bg-green-950/20 border-green-800/30">
-                  <CardContent className="pt-3">
-                    <p className="text-green-500/90 text-xs flex items-center gap-2">
-                      <FontAwesomeIcon icon={faCheckCircle} />
-                      ✓ Converter ready! Forces H.264 Main + yuv420p (works on Windows, Mac, mobile).
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <Card className="bg-zinc-900/50 border-zinc-800/50">
+                <CardContent className="pt-3">
+                  <p className="text-zinc-300/90 text-xs flex items-center gap-2">
+                    <FontAwesomeIcon icon={faCheckCircle} />
+                    Videos are converted after upload for universal compatibility (Windows/Mac/mobile).
+                  </p>
+                </CardContent>
+              </Card>
               
               {/* Upload from Computer */}
               <Card className="bg-zinc-900/50">
@@ -1919,7 +1834,7 @@ const AdminDashboard = () => {
                     </div>
                   )}
                   <p className="text-xs text-zinc-500">
-                    ✅ Supports all formats: MP4, MOV, AVI, WebM, etc. - Will work on all devices!
+                   Upload G!
                   </p>
                 </CardContent>
               </Card>
