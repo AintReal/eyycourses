@@ -459,14 +459,14 @@ const Dashboard = () => {
       {/* Sidebar - Always visible on desktop (md+), sliding on mobile */}
       <div className={`
         w-80 md:w-[320px]
-        bg-zinc-950 border-r border-zinc-800
+        md:bg-zinc-950 md:border-r md:border-zinc-800
         fixed md:sticky
         h-screen
         overflow-y-auto
         top-0 bottom-0
         z-50
         transition-transform duration-300 md:transition-none
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-[110%] md:translate-x-0'}
       `}>
         <div className="p-6">
           {/* Header */}

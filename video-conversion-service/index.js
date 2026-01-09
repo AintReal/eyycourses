@@ -56,7 +56,7 @@ async function convertAndUpload({ bucket, filePath }) {
           '-c:v libx264',
           '-profile:v main',
           '-pix_fmt yuv420p',
-          '-crf 20',
+          '-crf 23',
           '-c:a aac',
           '-b:a 160k',
           '-movflags +faststart',
