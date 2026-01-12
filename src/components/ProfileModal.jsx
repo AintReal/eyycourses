@@ -6,6 +6,9 @@ import { faTimes, faCamera, faUser, faEnvelope, faTrash, faChartBar } from '@for
 import LoadingLogo from './LoadingLogo';
 import Progress from './Progress';
 import ComponentErrorBoundary from './ComponentErrorBoundary';
+import ImageCropModal from './ImageCropModal';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
+import { readFile } from '../utils/cropImage';
 import { useTranslation } from '../../node_modules/react-i18next';
 
 const ProfileModal = ({ isOpen, onClose }) => {
@@ -17,6 +20,9 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'progress'
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -114,19 +120,38 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
     if (!file.type.startsWith('image/')) {
       setError('Please upload an image file');
+      e.target.value = ''; // Reset input
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setError('Image size must be less than 5MB');
+      e.target.value = ''; // Reset input
       return;
     }
 
+    setError('');
+    
+    try {
+      // Read the file and open crop modal
+      const imageDataUrl = await readFile(file);
+      setImageToCrop(imageDataUrl);
+      setIsCropModalOpen(true);
+    } catch (err) {
+      setError('Failed to load image');
+    } finally {
+      // Always reset the input so the same file can be selected again
+      e.target.value = '';
+    }
+  };
+
+  const handleCropComplete = async (croppedFile) => {
     setUploading(true);
     setError('');
     setSuccess('');
 
     try {
+      // Delete old profile picture if exists
       if (profile.profile_picture_url) {
         const oldPath = profile.profile_picture_url.split('/').pop();
         await supabase.storage
@@ -134,13 +159,14 @@ const ProfileModal = ({ isOpen, onClose }) => {
           .remove([`${session.user.id}/${oldPath}`]);
       }
 
-      const fileExt = file.name.split('.').pop();
+      // Upload the cropped image
+      const fileExt = 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('profile-pictures')
-        .upload(filePath, file);
+        .upload(filePath, croppedFile);
 
       if (uploadError) throw uploadError;
 
@@ -162,13 +188,13 @@ const ProfileModal = ({ isOpen, onClose }) => {
       setError('Failed to upload profile picture');
     } finally {
       setUploading(false);
+      setIsCropModalOpen(false);
+      setImageToCrop(null);
     }
   };
 
   const handleDeleteProfilePicture = async () => {
     if (!profile.profile_picture_url) return;
-    
-    if (!confirm('Are you sure you want to delete your profile picture?')) return;
 
     setUploading(true);
     setError('');
@@ -190,6 +216,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
       setProfile({ ...profile, profile_picture_url: '' });
       setSuccess('Profile picture deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
+      setIsDeleteModalOpen(false);
     } catch (err) {
       setError('Failed to delete profile picture');
     } finally {
@@ -200,18 +227,19 @@ const ProfileModal = ({ isOpen, onClose }) => {
   if (!shouldRender) return null;
 
   return (
-    <div 
-      className={`fixed inset-0 bg-black/50 backdrop-blur-md z-100 flex items-center justify-center p-4 transition-all duration-300 ease-out ${
-        isAnimating ? 'opacity-100' : 'opacity-0'
-      }`}
-      onClick={onClose}
-    >
+    <>
       <div 
-        className={`bg-zinc-950/95 backdrop-blur-lg rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-zinc-800 shadow-2xl transition-all duration-300 ease-out ${
-          isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+        className={`fixed inset-0 bg-black/50 backdrop-blur-md z-100 flex items-center justify-center p-4 transition-all duration-300 ease-out ${
+          isAnimating ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
+        <div 
+          className={`bg-zinc-950/95 backdrop-blur-lg rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-zinc-800 shadow-2xl transition-all duration-300 ease-out ${
+            isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-10">
           <div className="p-4 flex items-center justify-between">
@@ -331,7 +359,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                       
                       {profile.profile_picture_url && (
                         <button
-                          onClick={handleDeleteProfilePicture}
+                          onClick={() => setIsDeleteModalOpen(true)}
                           disabled={uploading}
                           className="px-4 py-2 bg-red-900 hover:bg-red-800 rounded-lg transition-colors 
                                    text-xs font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -433,6 +461,26 @@ const ProfileModal = ({ isOpen, onClose }) => {
         </div>
       </div>
     </div>
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        isOpen={isCropModalOpen}
+        onClose={() => {
+          setIsCropModalOpen(false);
+          setImageToCrop(null);
+        }}
+        imageSrc={imageToCrop}
+        onCropComplete={handleCropComplete}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteProfilePicture}
+        isDeleting={uploading}
+      />
+    </>
   );
 };
 

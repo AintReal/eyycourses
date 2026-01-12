@@ -93,6 +93,17 @@ const resources = {
       "questionAddedSuccessfully": "Question added successfully!",
       "noContentYet": "Content coming soon...",
       
+      // Image Cropping
+      "editImage": "Edit Image",
+      "zoom": "Zoom",
+      "reset": "Reset",
+      "apply": "Apply",
+      "processing": "Processing...",
+      "deleteProfilePicture": "Delete Profile Picture",
+      "deleteProfilePictureConfirmation": "Are you sure you want to delete your profile picture? This action cannot be undone.",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      
       // Feedback
       "feedbackPrompt": "Please, if you find any bug or have any suggestions for us to improve the platform, send it! We truly need your honest feedback.",
       "feedbackPlaceholder": "Share your thoughts, report bugs, or suggest improvements...",
@@ -230,6 +241,17 @@ const resources = {
       "pleaseSelectCorrectAnswer": "يرجى اختيار الإجابة الصحيحة",
       "questionAddedSuccessfully": "تمت إضافة السؤال بنجاح!",
       "noContentYet": "المحتوى قريباً...",
+      
+      // Image Cropping
+      "editImage": "تعديل الصورة",
+      "zoom": "التكبير",
+      "reset": "إعادة تعيين",
+      "apply": "تطبيق",
+      "processing": "جاري المعالجة...",
+      "deleteProfilePicture": "حذف الصورة الشخصية",
+      "deleteProfilePictureConfirmation": "هل أنت متأكد من حذف صورتك الشخصية؟ لا يمكن التراجع عن هذا الإجراء.",
+      "delete": "حذف",
+      "deleting": "جاري الحذف...",
       
       // Feedback
       "feedbackPrompt": "من فضلك، إذا وجدت أي خطأ أو لديك أي اقتراحات لتحسين المنصة، أرسلها! نحتاج حقاً إلى رأيك الصادق.",
