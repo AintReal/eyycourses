@@ -7,6 +7,7 @@ import AccessCodeModal from './AccessCodeModal';
 import LanguageSwitcher from './LanguageSwitcher';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
+import LoadingLogo from './LoadingLogo';
 import { useTranslation } from '../../node_modules/react-i18next';
 
 const Signin = () => {
@@ -163,7 +164,7 @@ const handleSignin = async (e) => {
 if (navigating) {
   return (
     <div className="min-h-screen h-screen bg-black flex items-center justify-center">
-      <FontAwesomeIcon icon={faSpinner} className="animate-spin text-zinc-400 text-4xl" />
+      <LoadingLogo size="xl" />
     </div>
   );
 }
@@ -357,19 +358,19 @@ return (
         © 2026 eyycourses · {t('allRightsReserved')}
       </p>
       <div className="mt-2 flex items-center justify-center gap-3 text-xs">
-        <button 
+        <a 
           onClick={() => setShowPrivacyModal(true)}
-          className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-zinc-500 hover:text-zinc-300 transition-colors underline cursor-pointer"
         >
           {t('privacyPolicyLink')}
-        </button>
+        </a>
         <span className="text-zinc-700">·</span>
-        <button 
+        <a 
           onClick={() => setShowTermsModal(true)}
-          className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-zinc-500 hover:text-zinc-300 transition-colors underline cursor-pointer"
         >
           {t('termsOfServiceLink')}
-        </button>
+        </a>
       </div>
     </div>
     

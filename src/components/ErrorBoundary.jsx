@@ -12,7 +12,6 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error Boundary caught:', error, errorInfo);
   }
 
   handleReset = () => {

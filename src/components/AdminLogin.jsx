@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faSpinner, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import LoadingLogo from './LoadingLogo';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,6 @@ const AdminLogin = () => {
   const [lockoutTime, setLockoutTime] = useState(null);
   const navigate = useNavigate();
 
-  // Force English and LTR for Admin Login
   useEffect(() => {
     document.documentElement.setAttribute('lang', 'en');
     document.documentElement.setAttribute('dir', 'ltr');
@@ -94,7 +94,6 @@ const AdminLogin = () => {
       
       navigate('/admin/dashboard');
     } catch (err) {
-      console.error('Admin login error:', err);
       
       const newAttempts = loginAttempts + 1;
       setLoginAttempts(newAttempts);
@@ -224,7 +223,7 @@ const AdminLogin = () => {
           >
             {loading ? (
               <>
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                <LoadingLogo size="sm" />
                 Authenticating...
               </>
             ) : (

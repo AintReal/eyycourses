@@ -91,7 +91,53 @@ const resources = {
       "pleaseAddTwoAnswers": "Please add at least 2 answers",
       "pleaseSelectCorrectAnswer": "Please select the correct answer",
       "questionAddedSuccessfully": "Question added successfully!",
-      "noContentYet": "Content coming soon..."
+      "noContentYet": "Content coming soon...",
+      
+      // Feedback
+      "feedbackPrompt": "Please, if you find any bug or have any suggestions for us to improve the platform, send it! We truly need your honest feedback.",
+      "feedbackPlaceholder": "Share your thoughts, report bugs, or suggest improvements...",
+      "sendFeedback": "Send Feedback",
+      "sending": "Sending...",
+      "feedbackSent": "✓ Sent! Thank you!",
+      
+      // Profile
+      "profile": "Profile Settings",
+      "profilePicture": "Profile Picture",
+      "profilePictureInstructions": "Upload JPG, PNG, or GIF. Max 5MB.",
+      "uploadPicture": "Upload Picture",
+      "uploading": "Uploading...",
+      "deletePicture": "Delete",
+      "personalInfo": "Personal Information",
+      "enterName": "Enter your name",
+      "emailCannotChange": "Email cannot be changed",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "accountInfo": "Account Info",
+      "memberSince": "Member since",
+      "lastUpdated": "Last updated",
+      "profileSettings": "Profile Settings",
+      
+      // Progress Tracking
+      "myProgress": "My Progress",
+      "courseProgress": "Course Progress",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started",
+      "lessonsCompleted": "Lessons Completed",
+      "quizPerformance": "Quiz Performance",
+      "totalQuestions": "Total Questions",
+      "correctFirstTry": "Correct First Try",
+      "correctSecondTry": "Correct Second Try",
+      "correctThirdTry": "Correct 3+ Try",
+      "incorrectAnswers": "Incorrect",
+      "viewDetails": "View Details",
+      "backToProgress": "Back to Progress",
+      "noCoursesYet": "No courses started yet",
+      "startLearning": "Start watching lessons to track your progress!",
+      "completionRate": "Completion Rate",
+      "enrolledOn": "Enrolled on",
+      "completedOn": "Completed on",
+      "markComplete": "Mark as Complete"
     }
   },
   ar: {
@@ -183,7 +229,53 @@ const resources = {
       "pleaseAddTwoAnswers": "يرجى إضافة إجابتين على الأقل",
       "pleaseSelectCorrectAnswer": "يرجى اختيار الإجابة الصحيحة",
       "questionAddedSuccessfully": "تمت إضافة السؤال بنجاح!",
-      "noContentYet": "المحتوى قريباً..."
+      "noContentYet": "المحتوى قريباً...",
+      
+      // Feedback
+      "feedbackPrompt": "من فضلك، إذا وجدت أي خطأ أو لديك أي اقتراحات لتحسين المنصة، أرسلها! نحتاج حقاً إلى رأيك الصادق.",
+      "feedbackPlaceholder": "شارك أفكارك، أبلغ عن الأخطاء، أو اقترح تحسينات...",
+      "sendFeedback": "إرسال الملاحظات",
+      "sending": "جاري الإرسال...",
+      "feedbackSent": "✓ تم الإرسال! شكراً لك!",
+      
+      // Profile
+      "profile": "الإعدادات",
+      "profilePicture": "الصورة الشخصية",
+      "profilePictureInstructions": "JPG, PNG أو GIF. حد أقصى 5MB.",
+      "uploadPicture": "رفع صورة",
+      "uploading": "جاري الرفع...",
+      "deletePicture": "حذف",
+      "personalInfo": "المعلومات الشخصية",
+      "enterName": "أدخل اسمك",
+      "emailCannotChange": "لا يمكن تغيير البريد الإلكتروني",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جاري الحفظ...",
+      "accountInfo": "معلومات الحساب",
+      "memberSince": "عضو منذ",
+      "lastUpdated": "آخر تحديث",
+      "profileSettings": "الإعدادات",
+      
+      // Progress Tracking
+      "myProgress": "تقدمي",
+      "courseProgress": "تقدم الدورات",
+      "completed": "مكتمل",
+      "inProgress": "قيد التقدم",
+      "notStarted": "لم يبدأ",
+      "lessonsCompleted": "الدروس المكتملة",
+      "quizPerformance": "أداء الاختبارات",
+      "totalQuestions": "إجمالي الأسئلة",
+      "correctFirstTry": "صحيح من المحاولة الأولى",
+      "correctSecondTry": "صحيح من المحاولة الثانية",
+      "correctThirdTry": "صحيح من المحاولة الثالثة+",
+      "incorrectAnswers": "خطأ",
+      "viewDetails": "عرض التفاصيل",
+      "backToProgress": "العودة للتقدم",
+      "noCoursesYet": "لم تبدأ أي دورات بعد",
+      "startLearning": "ابدأ بمشاهدة الدروس لتتبع تقدمك!",
+      "completionRate": "نسبة الإنجاز",
+      "enrolledOn": "انضممت في",
+      "completedOn": "اكتملت في",
+      "markComplete": "وضع علامة مكتمل"
     }
   }
 };

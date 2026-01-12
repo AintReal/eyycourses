@@ -2,16 +2,19 @@ import { UserAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronRight, faBars, faTimes, faPlay, faLock, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faBars, faTimes, faPlay, faLock, faSignOutAlt, faCog, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import LanguageSwitcher from './LanguageSwitcher';
+import LoadingLogo from './LoadingLogo';
+import ProfileModal from './ProfileModal';
+import ComponentErrorBoundary from './ComponentErrorBoundary';
 import { useTranslation } from '../../node_modules/react-i18next';
 import { supabase } from '../supabaseClient';
 import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { trackLessonView, markLessonComplete } from '../utils/progressTracking';
 
-// Parse content to separate questions from regular HTML
 const parseContent = (contentHtml) => {
   if (!contentHtml) return { content: '', questions: [] };
   
@@ -28,11 +31,9 @@ const parseContent = (contentHtml) => {
         index: match.index
       });
     } catch (e) {
-      console.error('Failed to parse question:', e);
     }
   }
   
-  // Remove question blocks from content
   let cleanContent = contentHtml;
   matches.forEach(m => {
     cleanContent = cleanContent.replace(m.fullMatch, '');
@@ -170,6 +171,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -200,18 +205,14 @@ const Dashboard = () => {
     const generateVideoUrl = async () => {
       const currentContent = selectedMiniLesson || selectedLesson;
       
-      // Clear video URL first to force re-render
       setVideoUrl(null);
       
       if (!currentContent?.video_url) {
         return;
       }
 
-      // Small delay to ensure cleanup happens
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Generate signed URL for private videos
-      // Prefer the server-converted version first: lesson-videos/converted/<filename>
       if (currentContent.video_url.startsWith('lesson-videos/')) {
         try {
           const originalPath = currentContent.video_url.replace('lesson-videos/', '');
@@ -230,7 +231,6 @@ const Dashboard = () => {
             }
           }
 
-          // Fallback to original (may be HEVC and not play on some Windows devices)
           const { data, error } = await supabase.storage
             .from('lesson-videos')
             .createSignedUrl(originalPath, 3600);
@@ -238,7 +238,6 @@ const Dashboard = () => {
           if (error) throw error;
           setVideoUrl(data.signedUrl);
         } catch (error) {
-          console.error('Error generating signed URL:', error);
           setVideoUrl(null);
         }
       } else {
@@ -248,7 +247,6 @@ const Dashboard = () => {
 
     generateVideoUrl();
     
-    // Cleanup function to clear video when component unmounts or lesson changes
     return () => {
       setVideoUrl(null);
     };
@@ -261,7 +259,6 @@ const Dashboard = () => {
   const fetchCourses = async () => {
     setLoading(true);
     
-    // Fetch sections
     const { data: sectionsData } = await supabase
       .from('sections')
       .select('*')
@@ -271,7 +268,6 @@ const Dashboard = () => {
       setSections(sectionsData);
     }
     
-    // Fetch courses
     const { data, error } = await supabase
       .from('courses')
       .select('*')
@@ -279,7 +275,6 @@ const Dashboard = () => {
     
     if (data) {
       setCourses(data);
-      // Auto-expand first open course
       const firstOpenCourse = data.find(c => c.is_open);
       if (firstOpenCourse) {
         setExpandedCourse(firstOpenCourse.id);
@@ -299,8 +294,6 @@ const Dashboard = () => {
     if (data) {
       setCourseLessons(prev => ({ ...prev, [courseId]: data }));
       
-      // IMMEDIATELY fetch mini-lessons for ALL lessons in this course
-      // This way we KNOW which lessons have mini-lessons from the start
       for (const lesson of data) {
         await fetchMiniLessons(lesson.id);
       }
@@ -337,14 +330,12 @@ const Dashboard = () => {
   const toggleLesson = async (lesson) => {
     const miniLessons = lessonMiniLessons[lesson.id] || [];
     
-    // If lesson has NO mini-lessons, just select it directly
     if (miniLessons.length === 0) {
       selectLesson(lesson);
       setIsMobileMenuOpen(false);
       return;
     }
     
-    // If lesson HAS mini-lessons, toggle the dropdown
     if (expandedLesson === lesson.id) {
       setExpandedLesson(null);
     } else {
@@ -352,14 +343,107 @@ const Dashboard = () => {
     }
   };
 
-  const selectLesson = (lesson) => {
+  const selectLesson = async (lesson) => {
     setSelectedLesson(lesson);
     setSelectedMiniLesson(null);
+    
+    if (session?.user && lesson.course_id) {
+      await trackLessonView(session.user.id, lesson.course_id, lesson.id, null);
+    }
   };
 
-  const selectMiniLesson = (miniLesson) => {
+  const selectMiniLesson = async (miniLesson) => {
     setSelectedMiniLesson(miniLesson);
     setSelectedLesson(null);
+    
+    if (session?.user && selectedLesson) {
+      await trackLessonView(session.user.id, selectedLesson.course_id, miniLesson.lesson_id, miniLesson.id);
+    }
+  };
+
+  const handleVideoPlay = async () => {
+    if (!session?.user) return;
+    
+    if (selectedMiniLesson) {
+      const parentLesson = Object.values(courseLessons)
+        .flat()
+        .find(l => l.id === selectedMiniLesson.lesson_id);
+      
+      if (parentLesson) {
+        await trackLessonView(
+          session.user.id, 
+          parentLesson.course_id, 
+          selectedMiniLesson.lesson_id, 
+          selectedMiniLesson.id
+        );
+      }
+    } else if (selectedLesson) {
+      await trackLessonView(
+        session.user.id, 
+        selectedLesson.course_id, 
+        selectedLesson.id, 
+        null
+      );
+    }
+  };
+
+  const handleVideoTimeUpdate = async (e) => {
+    if (!session?.user) return;
+    
+    const video = e.target;
+    const percentWatched = (video.currentTime / video.duration) * 100;
+    
+    if (percentWatched >= 80) {
+      if (selectedMiniLesson) {
+        const parentLesson = Object.values(courseLessons)
+          .flat()
+          .find(l => l.id === selectedMiniLesson.lesson_id);
+        
+        if (parentLesson) {
+          await markLessonComplete(
+            session.user.id, 
+            parentLesson.course_id, 
+            selectedMiniLesson.lesson_id, 
+            selectedMiniLesson.id
+          );
+        }
+      } else if (selectedLesson) {
+        await markLessonComplete(
+          session.user.id, 
+          selectedLesson.course_id, 
+          selectedLesson.id, 
+          null
+        );
+      }
+      
+      video.removeEventListener('timeupdate', handleVideoTimeUpdate);
+    }
+  };
+
+  const handleVideoEnded = async () => {
+    if (!session?.user) return;
+    
+    if (selectedMiniLesson) {
+      const parentLesson = Object.values(courseLessons)
+        .flat()
+        .find(l => l.id === selectedMiniLesson.lesson_id);
+      
+      if (parentLesson) {
+        await markLessonComplete(
+          session.user.id, 
+          parentLesson.course_id, 
+          selectedMiniLesson.lesson_id, 
+          selectedMiniLesson.id
+        );
+      }
+    } else if (selectedLesson) {
+      await markLessonComplete(
+        session.user.id, 
+        selectedLesson.course_id, 
+        selectedLesson.id, 
+        null
+      );
+    }
   };
 
   const handleSignOut = async (e) => {
@@ -368,7 +452,35 @@ const Dashboard = () => {
       await signOut();
       navigate('/');
     } catch (err) {
-      console.log('an error occured');
+    }
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!feedback.trim()) return;
+
+    setFeedbackSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .insert([
+          {
+            user_id: session?.user?.id,
+            user_email: session?.user?.email,
+            message: feedback.trim(),
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+      if (error) throw error;
+
+      setFeedback('');
+      setFeedbackSuccess(true);
+      setTimeout(() => setFeedbackSuccess(false), 3000);
+    } catch (err) {
+      alert('Failed to submit feedback. Please try again.');
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -383,7 +495,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-zinc-400 text-xl">{t('loading') || 'Loading...'}</div>
+        <LoadingLogo size="xl" />
       </div>
     );
   }
@@ -443,8 +555,15 @@ const Dashboard = () => {
         <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} />
       </button>
 
-      {/* Language Switcher - Top Right */}
-      <div className="fixed top-4 ltr:right-4 rtl:left-4 z-50">
+      {/* Settings and Language Switcher - Top Right */}
+      <div className="fixed top-4 ltr:right-4 rtl:left-4 z-50 flex items-center gap-3">
+        <button
+          onClick={() => setIsProfileModalOpen(true)}
+          className="bg-zinc-950 text-white p-3 rounded-lg border border-zinc-800 shadow-lg hover:bg-zinc-900 transition-colors"
+          title={t('profileSettings') || 'Profile Settings'}
+        >
+          <FontAwesomeIcon icon={faCog} />
+        </button>
         <LanguageSwitcher />
       </div>
       
@@ -717,8 +836,51 @@ const Dashboard = () => {
         </nav>
         </div>
 
-        {/* Sign Out Button - Sticky at bottom */}
-        <div className="sticky bottom-0 bg-zinc-950 border-t border-zinc-800 p-6">
+        {/* Feedback Form & Sign Out Button - Sticky at bottom */}
+        <div className="sticky bottom-0 bg-zinc-950 border-t border-zinc-800 p-6 space-y-5">
+          {/* Feedback Form */}
+          <div className="bg-zinc-900 rounded-lg p-5 border border-zinc-800">
+            <p className="text-zinc-300 text-sm mb-4 leading-relaxed">
+              {t('feedbackPrompt')}
+            </p>
+            <form onSubmit={handleFeedbackSubmit} className="space-y-3">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder={t('feedbackPlaceholder')}
+                className="w-full bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-md p-3 text-sm 
+                         placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 
+                         resize-none min-h-20"
+                disabled={feedbackSubmitting}
+              />
+              <button
+                type="submit"
+                disabled={feedbackSubmitting || !feedback.trim()}
+                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2.5 px-4 
+                         rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {feedbackSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoadingLogo size="sm" />
+                    {t('sending')}
+                  </span>
+                ) : feedbackSuccess ? (
+                  t('feedbackSent')
+                ) : (
+                  t('sendFeedback')
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Copyright Notice */}
+          <div className="text-center">
+            <p className="text-zinc-500 text-xs">
+              © 2026 eyycourses · {t('allRightsReserved')}
+            </p>
+          </div>
+
+          {/* Sign Out Button */}
           <Button
             onClick={handleSignOut}
             variant="destructive"
@@ -758,7 +920,6 @@ const Dashboard = () => {
                   <CardContent className="p-0" style={{ position: 'relative', zIndex: 1 }}>
                     {/* Check if it's a YouTube embed or direct video file */}
                     {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') || videoUrl.includes('embed') ? (
-                      // YouTube or embed URL - use iframe
                       <div style={{ position: 'relative', paddingBottom: '56.25%', zIndex: 1 }}>
                         <iframe
                           key={`iframe-${selectedMiniLesson?.id || selectedLesson?.id}`}
@@ -771,7 +932,6 @@ const Dashboard = () => {
                         ></iframe>
                       </div>
                     ) : (
-                      // Direct video file - H.264 Main + yuv420p + AAC
                       <video
                         key={`video-${selectedMiniLesson?.id || selectedLesson?.id}`}
                         controls
@@ -780,6 +940,9 @@ const Dashboard = () => {
                         style={{ maxHeight: '600px', position: 'relative', zIndex: 1 }}
                         playsInline
                         preload="metadata"
+                        onPlay={handleVideoPlay}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                        onEnded={handleVideoEnded}
                       >
                         <source src={videoUrl} type="video/mp4" />
                         Your browser does not support the video tag.
@@ -853,6 +1016,14 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Profile Modal */}
+      <ComponentErrorBoundary fallbackTitle="Profile Error" fallbackMessage="Unable to load profile settings.">
+        <ProfileModal 
+          isOpen={isProfileModalOpen} 
+          onClose={() => setIsProfileModalOpen(false)} 
+        />
+      </ComponentErrorBoundary>
     </div>
   );
 };

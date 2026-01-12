@@ -10,6 +10,7 @@ import {
   faChartLine,
   faEye
 } from '@fortawesome/free-solid-svg-icons';
+import LoadingLogo from './LoadingLogo';
 import { 
   BarChart, 
   Bar, 
@@ -56,33 +57,27 @@ const Analytics = () => {
     setLoading(true);
     
     try {
-      // Fetch users data
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Fetch courses data
       const { data: courses, error: coursesError } = await supabase
         .from('courses')
         .select('*');
 
-      // Fetch lessons data
       const { data: lessons, error: lessonsError } = await supabase
         .from('lessons')
         .select('*');
 
-      // Fetch access codes data
       const { data: accessCodes, error: codesError } = await supabase
         .from('access_codes')
         .select('*');
 
       if (usersError || coursesError || lessonsError || codesError) {
-        console.error('Error fetching analytics:', { usersError, coursesError, lessonsError, codesError });
         return;
       }
 
-      // Calculate stats
       const usersWithValidatedCodes = users?.filter(u => u.code_validated) || [];
       const totalRevenue = usersWithValidatedCodes.length * 189;
 
@@ -95,7 +90,6 @@ const Analytics = () => {
         revenuePerCourse: 189,
       });
 
-      // Course enrollment stats
       const courseStatsData = courses?.map(course => {
         const enrolledUsers = usersWithValidatedCodes.length; // All validated users have access to all courses for now
         return {
@@ -107,29 +101,24 @@ const Analytics = () => {
       }) || [];
       setCourseStats(courseStatsData);
 
-      // User activity over time (signups per day)
       const activityData = generateActivityData(users || []);
       setUserActivity(activityData);
 
-      // Recent users
       setRecentUsers(users?.slice(0, 10) || []);
 
     } catch (error) {
-      console.error('Error in fetchAnalytics:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const generateActivityData = (users) => {
-    // Group users by signup date
     const dateCounts = {};
     users.forEach(user => {
       const date = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       dateCounts[date] = (dateCounts[date] || 0) + 1;
     });
 
-    // Convert to array for chart
     return Object.entries(dateCounts).map(([date, count]) => ({
       date,
       signups: count,
@@ -141,7 +130,7 @@ const Analytics = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-white text-xl">Loading analytics...</div>
+        <LoadingLogo size="lg" />
       </div>
     );
   }
@@ -320,7 +309,6 @@ const Analytics = () => {
             </TableHeader>
             <TableBody>
               {(() => {
-                // Filter users based on search
                 const filteredUsers = recentUsers.filter((user) => {
                   if (!searchQuery) return true;
                   const query = searchQuery.toLowerCase();
@@ -330,7 +318,6 @@ const Analytics = () => {
                   );
                 });
 
-                // Paginate
                 const indexOfLastUser = currentPage * usersPerPage;
                 const indexOfFirstUser = indexOfLastUser - usersPerPage;
                 const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);

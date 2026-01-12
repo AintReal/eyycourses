@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from '../../node_modules/react-i18next';
+import LoadingLogo from './LoadingLogo';
 
 const AccessCodeModal = ({ onValidate, onSuccess }) => {
   const { t } = useTranslation();
@@ -86,7 +87,7 @@ const AccessCodeModal = ({ onValidate, onSuccess }) => {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2 text-white">
-                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                  <LoadingLogo size="sm" />
                   {t('verifying')}
                 </span>
               ) : (

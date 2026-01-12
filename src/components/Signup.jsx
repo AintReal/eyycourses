@@ -7,6 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
 import { useTranslation } from '../../node_modules/react-i18next';
+import LoadingLogo from './LoadingLogo';
 
 const Signup = () => {
 const { t, i18n } = useTranslation();
@@ -47,7 +48,6 @@ const handleSignup = async (e) => {
     if(results.success){
       setEmailSent(true)
     } else if (results.error) {
-      // Handle duplicate account error
       if (results.error.message?.includes('already registered') || 
           results.error.message?.includes('already exists')) {
         setError('You already have an account! Please sign in instead.')
@@ -308,7 +308,7 @@ return (
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+              <LoadingLogo size="sm" />
               {t('creatingAccount')}
             </span>
           ) : (
@@ -340,19 +340,19 @@ return (
         © 2026 eyycourses · {t('allRightsReserved')}
       </p>
       <div className="mt-2 flex items-center justify-center gap-3 text-xs">
-        <button 
+        <a 
           onClick={() => setShowPrivacyModal(true)}
-          className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-zinc-500 hover:text-zinc-300 transition-colors underline cursor-pointer"
         >
           {t('privacyPolicyLink')}
-        </button>
+        </a>
         <span className="text-zinc-700">·</span>
-        <button 
+        <a 
           onClick={() => setShowTermsModal(true)}
-          className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-zinc-500 hover:text-zinc-300 transition-colors underline cursor-pointer"
         >
           {t('termsOfServiceLink')}
-        </button>
+        </a>
       </div>
     </div>
     

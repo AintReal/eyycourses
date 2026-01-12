@@ -15,20 +15,9 @@ dist-ssr
 .env.local
 .env.production
 .env.development
-find_uid.sql
-fix_policies.sql
-make_admin.sql
-convert_videos.sh
-secure_rls_policies.sql
-setup_admin_auth.sql
-setup_courses.sql
-ADD_BAN_COLUMN.sql
-CRITICAL_VIDEO_FIX.md
-FINAL_VIDEO_SOLUTION.md
-check-video.sh
-convert-videos.sh
-batch-convert-videos.sh
-convert-videos.sh
+COMPLETE_TECH_ARCHITECTURE.md
+PLATFORM_STRUCTURE.md
+setup.sql
 
 
 codes.txt
@@ -36,7 +25,6 @@ codes.csv
 codes.json
 *.codes
 view-codes.html
-setup.sql
 access-codes-*.csv
 
 # Documentation

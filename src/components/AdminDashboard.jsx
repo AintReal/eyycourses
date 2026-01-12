@@ -6,7 +6,8 @@ import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faP
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import Analytics from './Analytics';
-// Browser-side video conversion removed (handled server-side via webhook -> Railway)
+import LoadingLogo from './LoadingLogo';
+import ComponentErrorBoundary from './ComponentErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,7 +44,6 @@ const AdminDashboard = () => {
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   
-  // Server-side conversion pipeline; no browser FFmpeg state needed
 
   const [sectionForm, setSectionForm] = useState({
     title_en: '',
@@ -92,14 +92,12 @@ const AdminDashboard = () => {
   const [questionText, setQuestionText] = useState('');
   const [questionAnswers, setQuestionAnswers] = useState([{ text: '', isCorrect: false }]);
 
-  // Force English and LTR for Admin Dashboard
   useEffect(() => {
     i18n.changeLanguage('en');
     document.documentElement.setAttribute('lang', 'en');
     document.documentElement.setAttribute('dir', 'ltr');
   }, [i18n]);
 
-  // Browser-side FFmpeg loading removed
 
   useEffect(() => {
     checkAdminAuth();
@@ -129,7 +127,6 @@ const AdminDashboard = () => {
             }
           }
 
-          // Fallback to original
           const { data, error } = await supabase.storage
             .from('lesson-videos')
             .createSignedUrl(originalPath, 3600);
@@ -137,7 +134,6 @@ const AdminDashboard = () => {
           if (error) throw error;
           setPreviewVideoUrl(data.signedUrl);
         } catch (error) {
-          console.error('Error generating preview URL:', error);
           setPreviewVideoUrl(null);
         }
       } else {
@@ -156,7 +152,6 @@ const AdminDashboard = () => {
       return;
     }
     
-    // Verify admin privileges
     const isAdmin = session.user.user_metadata?.is_admin === true;
     if (!isAdmin) {
       setToast({ message: 'Access denied. Admin privileges required.', type: 'error' });
@@ -171,23 +166,21 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch users from public.users table instead of auth.admin
     const { data: usersData, error: usersError } = await supabase
       .from('users')
       .select('*')
       .order('created_at', { ascending: true });
     
     if (usersError) {
-      console.error('Error fetching users:', usersError);
     }
     
     if (usersData) {
-      // Add user numbers based on creation order
       const usersWithNumbers = usersData.map((user, index) => ({
         ...user,
         userNumber: index + 1
       }));
       setUsers(usersWithNumbers);
+    } else {
     }
 
     const { data: codesData } = await supabase
@@ -253,7 +246,6 @@ const AdminDashboard = () => {
       message: `Are you sure you want to delete ${userEmail}? This action cannot be undone.`,
       onConfirm: async () => {
         try {
-          // Delete from public.users table
           const { error } = await supabase
             .from('users')
             .delete()
@@ -264,7 +256,6 @@ const AdminDashboard = () => {
           setToast({ message: 'User deleted successfully!', type: 'success' });
           await fetchData();
         } catch (error) {
-          console.error('Error deleting user:', error);
           setToast({ message: 'Error deleting user: ' + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -289,7 +280,6 @@ const AdminDashboard = () => {
           setToast({ message: `User ${action}ned successfully!`, type: 'success' });
           await fetchData();
         } catch (error) {
-          console.error(`Error ${action}ning user:`, error);
           setToast({ message: `Error ${action}ning user: ` + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -355,7 +345,6 @@ const AdminDashboard = () => {
       setShowSectionModal(false);
       await fetchData();
     } catch (error) {
-      console.error('Error saving section:', error);
       setToast({ message: 'Error saving section: ' + error.message, type: 'error' });
     } finally {
       setSaving(false);
@@ -373,7 +362,6 @@ const AdminDashboard = () => {
           setToast({ message: 'Section deleted successfully!', type: 'success' });
           await fetchData();
         } catch (error) {
-          console.error('Error deleting section:', error);
           setToast({ message: 'Error deleting section: ' + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -447,7 +435,6 @@ const AdminDashboard = () => {
       setShowCourseModal(false);
       await fetchData();
     } catch (error) {
-      console.error('Error saving course:', error);
       setToast({ message: 'Error saving course: ' + error.message, type: 'error' });
     } finally {
       setSaving(false);
@@ -465,7 +452,6 @@ const AdminDashboard = () => {
           setToast({ message: 'Course deleted successfully!', type: 'success' });
           await fetchData();
         } catch (error) {
-          console.error('Error deleting course:', error);
           setToast({ message: 'Error deleting course: ' + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -490,7 +476,6 @@ const AdminDashboard = () => {
     setShowLessonModal(true);
   };
 
-  // Browser-side convertVideoToMP4 removed
 
   const uploadVideoToStorage = async (file) => {
     try {
@@ -533,7 +518,6 @@ const AdminDashboard = () => {
       setUploadProgress(100);
       return storagePath;
     } catch (error) {
-      console.error('Upload error:', error);
       throw error;
     } finally {
       setUploadingVideo(false);
@@ -600,7 +584,6 @@ const AdminDashboard = () => {
       setShowLessonModal(false);
       await fetchLessons(selectedCourse);
     } catch (error) {
-      console.error('Error saving lesson:', error);
       setToast({ message: 'Error saving lesson: ' + error.message, type: 'error' });
     } finally {
       setSaving(false);
@@ -625,14 +608,12 @@ const AdminDashboard = () => {
                 .from('lesson-videos')
                 .remove([filePath]);
             } catch (storageError) {
-              console.error('Error deleting video from storage:', storageError);
             }
           }
 
           setToast({ message: 'Lesson deleted successfully!', type: 'success' });
           await fetchLessons(selectedCourse);
         } catch (error) {
-          console.error('Error deleting lesson:', error);
           setToast({ message: 'Error deleting lesson: ' + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -704,7 +685,6 @@ const AdminDashboard = () => {
       setShowMiniLessonModal(false);
       await fetchMiniLessons(selectedLesson);
     } catch (error) {
-      console.error('Error saving mini-lesson:', error);
       setToast({ message: 'Error saving mini-lesson: ' + error.message, type: 'error' });
     } finally {
       setSaving(false);
@@ -722,7 +702,6 @@ const AdminDashboard = () => {
           setToast({ message: 'Mini-lesson deleted successfully!', type: 'success' });
           await fetchMiniLessons(selectedLesson);
         } catch (error) {
-          console.error('Error deleting mini-lesson:', error);
           setToast({ message: 'Error deleting mini-lesson: ' + error.message, type: 'error' });
         }
         setConfirmDialog(null);
@@ -798,7 +777,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-zinc-400 text-xl">Loading...</div>
+        <LoadingLogo size="xl" />
       </div>
     );
   }
@@ -893,21 +872,6 @@ const AdminDashboard = () => {
           </button>
           
           <button
-            onClick={() => setActiveTab('courses')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
-              activeTab === 'courses' 
-                ? 'bg-white text-black font-medium shadow-lg' 
-                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-            }`}
-          >
-            <FontAwesomeIcon icon={faBook} className="text-base" />
-            <span className="flex-1 text-left">All Courses</span>
-            <Badge variant="secondary" className={`text-xs ${activeTab === 'courses' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
-              {courses.length}
-            </Badge>
-          </button>
-          
-          <button
             onClick={() => setActiveTab('users')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
               activeTab === 'users' 
@@ -956,7 +920,9 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
-            <Analytics />
+            <ComponentErrorBoundary fallbackTitle="Analytics Error" fallbackMessage="Unable to load analytics data.">
+              <Analytics />
+            </ComponentErrorBoundary>
           )}
 
           {/* Sections Tab - Main View */}
@@ -1255,130 +1221,6 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Courses Tab */}
-        {activeTab === 'courses' && !selectedCourse && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Manage Courses</h2>
-              <Button onClick={() => openCourseModal()} className="text-white">
-                <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                Add Course
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {courses.map((course) => (
-                <Card key={course.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <h3 className="text-lg font-semibold text-zinc-100">
-                            {course.title_en} / {course.title_ar}
-                          </h3>
-                          <Badge variant={course.is_open ? "default" : "secondary"}>
-                            {course.is_open ? 'Open' : 'Soon'}
-                          </Badge>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSelectedCourse(course.id);
-                            fetchLessons(course.id);
-                          }}
-                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
-                        >
-                          View Lessons →
-                        </button>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openCourseModal(course)}
-                          className="text-white"
-                        >
-                          <FontAwesomeIcon icon={faEdit} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteCourse(course.id)}
-                          className="text-white"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Lessons View */}
-        {activeTab === 'courses' && selectedCourse && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <button
-                  onClick={() => setSelectedCourse(null)}
-                  className="text-gray-300 hover:text-white mb-2"
-                >
-                  ← Back to Courses
-                </button>
-                <h2 className="text-xl font-semibold">
-                  Lessons - {courses.find(c => c.id === selectedCourse)?.title_en}
-                </h2>
-              </div>
-              <button
-                onClick={() => openLessonModal()}
-                className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-xl transition font-medium border border-zinc-600"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                Add Lesson
-              </button>
-            </div>
-
-            <div className="grid gap-4">
-              {lessons.map((lesson) => (
-                <div key={lesson.id} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-1">
-                        {lesson.title_en} / {lesson.title_ar}
-                      </h3>
-                      {lesson.video_url && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                          <FontAwesomeIcon icon={faVideo} />
-                          <span>{lesson.video_url}</span>
-                        </div>
-                      )}
-                      {lesson.content_html && (
-                        <p className="text-sm text-gray-400">Has HTML content</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openLessonModal(lesson)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        onClick={() => deleteLesson(lesson.id)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="space-y-6">
@@ -1411,7 +1253,6 @@ const AdminDashboard = () => {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setCurrentPage(1); // Reset to page 1 when searching
                 }}
                 className="w-80"
               />
@@ -1432,7 +1273,6 @@ const AdminDashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {(() => {
-                      // Filter users based on search query
                       const filteredUsers = users.filter((user) => {
                         if (!searchQuery) return true;
                         const query = searchQuery.toLowerCase();
@@ -1443,7 +1283,6 @@ const AdminDashboard = () => {
                         );
                       });
 
-                      // Calculate pagination
                       const indexOfLastUser = currentPage * usersPerPage;
                       const indexOfFirstUser = indexOfLastUser - usersPerPage;
                       const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);

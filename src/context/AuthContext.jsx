@@ -19,11 +19,9 @@ export const AuthContextProvider = ({children}) => {
         });
 
         if(error){
-            console.error(`there was a problem signing up: ${error}`)
             return {success: false, error}   
         }
 
-        // Empty identities array means email already exists
         if (data?.user && data.user.identities && data.user.identities.length === 0) {
             return {
                 success: false, 
@@ -34,7 +32,6 @@ export const AuthContextProvider = ({children}) => {
         return {success: true, data}
     }
 
-    // Listen for auth state changes across tabs
     useEffect(() => {
         supabase.auth.getSession().then(({data: { session } }) => {
             setSession(session)
@@ -54,11 +51,9 @@ export const AuthContextProvider = ({children}) => {
                 password: password
             })
             if(error){
-                console.error("an error occured: ", error)
                 return {success: false, error: error.message}
             }
             
-            // Check if user is banned
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('is_banned')
@@ -66,11 +61,9 @@ export const AuthContextProvider = ({children}) => {
                 .single();
             
             if (userError) {
-                console.error("Error checking ban status:", userError);
             }
             
             if (userData?.is_banned) {
-                // Sign out immediately if banned
                 await supabase.auth.signOut();
                 return {
                     success: false, 
@@ -78,10 +71,8 @@ export const AuthContextProvider = ({children}) => {
                 };
             }
             
-            console.log('signing in, success!', data);
             return {success: true, data}
         } catch(error){
-            console.error(`There was an error loging in: ${error}`)
             return { success: false, error}
         }
     }
@@ -89,7 +80,6 @@ export const AuthContextProvider = ({children}) => {
     const signOut = async () => {
         const { error } = await supabase.auth.signOut()
         if(error){
-            console.error(`unable to sign out: ${error}`)
         }
     }
 
@@ -102,7 +92,6 @@ export const AuthContextProvider = ({children}) => {
         })
         
         if(error){
-            console.error('Error signing in with Google:', error)
             return { success: false, error }
         }
         
@@ -127,7 +116,6 @@ export const AuthContextProvider = ({children}) => {
                 return { success: false, error: 'Invalid or already used access code' };
             }
 
-            // Atomic update to prevent race conditions
             const { error: updateError } = await supabase
                 .from('access_codes')
                 .update({ 
@@ -139,7 +127,6 @@ export const AuthContextProvider = ({children}) => {
                 .eq('used', false);
 
             if (updateError) {
-                console.error('Error updating code:', updateError);
                 return { success: false, error: 'Code already used by another user' };
             }
 
@@ -151,12 +138,10 @@ export const AuthContextProvider = ({children}) => {
             });
 
             if (metadataError) {
-                console.error('Error updating user metadata:', metadataError);
             }
 
             return { success: true };
         } catch (error) {
-            console.error('Error validating access code:', error);
             return { success: false, error: 'An error occurred' };
     }
 }

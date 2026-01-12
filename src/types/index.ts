@@ -315,7 +315,6 @@ export interface Notification {
 // Export all types
 
 export type {
-  // You can add re-exports or grouped exports here if needed
 };
 
 export default {
