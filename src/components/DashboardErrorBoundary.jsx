@@ -36,7 +36,7 @@ class DashboardErrorBoundary extends Component {
                 
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-left">
-                    <p className="text-red-400 text-xs font-mono break-all">
+                      <p className="text-red-400 text-xs font-mono break-all">
                       {this.state.error.toString()}
                     </p>
                   </div>
@@ -45,7 +45,7 @@ class DashboardErrorBoundary extends Component {
                 <div className="flex gap-3">
                   <button
                     onClick={this.handleReload}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all"
+                    className="flex-1 py-3 bg-[#c96f49] hover:bg-[#b85f39] text-white font-semibold rounded-xl transition-all"
                   >
                     Reload Page
                   </button>

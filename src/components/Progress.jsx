@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 const ProgressBar = ({ value, className = '' }) => (
   <div className={`w-full bg-zinc-800 rounded-full h-2 overflow-hidden ${className}`}>
     <div 
-      className="h-full bg-blue-500 rounded-full transition-all duration-500"
+      className="h-full bg-[#c96f49] rounded-full transition-all duration-500"
       style={{ width: `${value}%` }}
     />
   </div>
@@ -244,7 +244,7 @@ const Progress = () => {
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <FontAwesomeIcon icon={faChartBar} className="text-blue-400" />
+              <FontAwesomeIcon icon={faChartBar} className="text-[#c96f49]" />
               {t('courseProgress')}
             </CardTitle>
           </CardHeader>
@@ -258,7 +258,7 @@ const Progress = () => {
             </div>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <div className="text-center p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                <div className="text-2xl font-bold text-blue-400">{selectedCourse.completedLessons}</div>
+                <div className="text-2xl font-bold text-[#c96f49]">{selectedCourse.completedLessons}</div>
                 <div className="text-xs text-zinc-400 mt-1">{t('lessonsCompleted')}</div>
               </div>
               <div className="text-center p-3 bg-zinc-950 rounded-lg border border-zinc-800">
@@ -288,9 +288,9 @@ const Progress = () => {
                   <span className="text-zinc-300">{t('correctFirstTry')}</span>
                   <Badge className="bg-green-600 text-white">{quizStats.correctFirstTry}</Badge>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-blue-950/30 rounded-lg border border-blue-800/30">
+                <div className="flex justify-between items-center p-3 bg-[#2a1510]/30 rounded-lg border border-[#8b4d2f]/30">
                   <span className="text-zinc-300">{t('correctSecondTry')}</span>
-                  <Badge className="bg-blue-600 text-white">{quizStats.correctSecondTry}</Badge>
+                  <Badge className="bg-[#c96f49] text-white">{quizStats.correctSecondTry}</Badge>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-yellow-950/30 rounded-lg border border-yellow-800/30">
                   <span className="text-zinc-300">{t('correctThirdTry')}</span>
@@ -320,7 +320,7 @@ const Progress = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <FontAwesomeIcon icon={faChartBar} className="text-blue-400 text-xl" />
+        <FontAwesomeIcon icon={faChartBar} className="text-[#c96f49] text-xl" />
         <h3 className="text-2xl font-bold text-white">{t('myProgress')}</h3>
       </div>
 
@@ -359,13 +359,13 @@ const Progress = () => {
                     ) : (
                       <Badge variant="secondary">{t('inProgress')}</Badge>
                     )}
-                    <span className="text-sm font-semibold text-blue-400">
+                    <span className="text-sm font-semibold text-[#c96f49]">
                       {enrollment.progressPercentage}%
                     </span>
                   </div>
                 </div>
                 <ProgressBar value={enrollment.progressPercentage} className="h-2" />
-                <button className="mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <button className="mt-3 text-sm text-[#c96f49] hover:text-[#d98963] transition-colors">
                   {t('viewDetails')} →
                 </button>
               </CardContent>

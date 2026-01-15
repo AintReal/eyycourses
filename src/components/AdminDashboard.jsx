@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faPlus, faEdit, faTrash, faVideo, faTimes, faSpinner, faChartBar, faBan } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faUsers, faKey, faCheckCircle, faTimesCircle, faBook, faPlus, faEdit, faTrash, faVideo, faTimes, faSpinner, faChartBar, faBan, faGripVertical, faChevronDown, faChevronUp, faSave } from '@fortawesome/free-solid-svg-icons';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import Analytics from './Analytics';
@@ -17,6 +17,369 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '../../node_modules/react-i18next';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Mini Lesson Item Component
+const SortableMiniLesson = ({ miniLesson, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: miniLesson.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700"
+    >
+      <div className="flex items-start gap-3">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing mt-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          <FontAwesomeIcon icon={faGripVertical} className="text-lg" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold mb-1">
+            {miniLesson.title_en} / {miniLesson.title_ar}
+          </h3>
+          {miniLesson.video_url && (
+            <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+              <FontAwesomeIcon icon={faVideo} />
+              <span>Has video</span>
+            </div>
+          )}
+          {miniLesson.content_html && (
+            <p className="text-sm text-gray-400">Has HTML content</p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(miniLesson)}
+            className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </button>
+          <button
+            onClick={() => onDelete(miniLesson.id)}
+            className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sortable Answer Item Component
+const SortableAnswer = ({ answer, index, totalAnswers, onUpdateText, onSetCorrect, onRemove, t }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `answer-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2"
+    >
+      {/* Drag Handle - Only show when more than 1 answer */}
+      {totalAnswers > 1 && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          <FontAwesomeIcon icon={faGripVertical} />
+        </div>
+      )}
+      
+      {/* Radio Button for Correct Answer */}
+      <input
+        type="radio"
+        name="correct-answer"
+        checked={answer.isCorrect}
+        onChange={onSetCorrect}
+        className="w-4 h-4 cursor-pointer accent-green-500"
+      />
+      
+      {/* Answer Text Input */}
+      <Input
+        value={answer.text}
+        onChange={(e) => onUpdateText(e.target.value)}
+        placeholder={`${t ? t('answer') : 'Answer'} ${index + 1}`}
+        className="flex-1 text-sm"
+      />
+      
+      {/* Remove Button - Only show when more than 1 answer */}
+      {totalAnswers > 1 && (
+        <Button
+          type="button"
+          onClick={onRemove}
+          size="sm"
+          variant="destructive"
+          className="text-white"
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </Button>
+      )}
+    </div>
+  );
+};
+
+// Sortable Question Item Component with Expand/Collapse
+const SortableQuestion = ({ 
+  questionTag, 
+  index, 
+  totalQuestions, 
+  onRemove, 
+  isExpanded, 
+  onToggle, 
+  onUpdate,
+  t 
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `question-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Parse question data
+  const questionData = React.useMemo(() => {
+    try {
+      const jsonStr = questionTag.replace('[QUESTION]', '').replace('[/QUESTION]', '');
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      return null;
+    }
+  }, [questionTag]);
+
+  const [editedQuestion, setEditedQuestion] = React.useState(questionData?.question || '');
+  const [editedAnswers, setEditedAnswers] = React.useState(questionData?.answers || []);
+
+  React.useEffect(() => {
+    if (questionData) {
+      setEditedQuestion(questionData.question);
+      setEditedAnswers(questionData.answers);
+    }
+  }, [questionData, isExpanded]);
+
+  if (!questionData) return null;
+
+  const handleSaveEdit = () => {
+    const updatedQuestionData = {
+      type: 'question',
+      question: editedQuestion,
+      answers: editedAnswers
+    };
+    onUpdate(index, updatedQuestionData);
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden transition-all duration-300"
+    >
+      {/* Question Header */}
+      <div className="flex items-center gap-2 p-3">
+        {/* Drag Handle - Only show when more than 1 question */}
+        {totalQuestions > 1 && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            <FontAwesomeIcon icon={faGripVertical} />
+          </div>
+        )}
+        
+        {/* Question Label - Clickable to expand */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 text-left text-sm text-zinc-300 hover:text-zinc-100 transition-colors font-medium truncate pr-2"
+        >
+          {questionData?.question || `Question ${index + 1}`}
+        </button>
+
+        {/* Expand/Collapse Icon */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-zinc-400 hover:text-zinc-200 transition-colors"
+        >
+          <FontAwesomeIcon 
+            icon={isExpanded ? faChevronUp : faChevronDown} 
+            className="text-sm"
+          />
+        </button>
+        
+        {/* Remove Button */}
+        <Button
+          type="button"
+          onClick={onRemove}
+          size="sm"
+          variant="destructive"
+          className="text-white"
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </Button>
+      </div>
+
+      {/* Expanded Content with Animation */}
+      <div 
+        className={`transition-all duration-300 ease-in-out ${
+          isExpanded 
+            ? 'max-h-[1000px] opacity-100' 
+            : 'max-h-0 opacity-0'
+        }`}
+        style={{
+          overflow: isExpanded ? 'visible' : 'hidden'
+        }}
+      >
+        <div className="px-3 pb-3 space-y-3 border-t border-zinc-800 pt-3">
+          {/* Question Text */}
+          <div className="space-y-2">
+            <Label className="text-xs text-zinc-400">Question Text</Label>
+            <Input
+              value={editedQuestion}
+              onChange={(e) => setEditedQuestion(e.target.value)}
+              className="bg-zinc-900 border-zinc-700 text-sm"
+              placeholder="Enter question text..."
+            />
+          </div>
+
+          {/* Answers */}
+          <div className="space-y-2">
+            <Label className="text-xs text-zinc-400">Answers</Label>
+            <div className="space-y-2">
+              {editedAnswers.map((answer, aIdx) => (
+                <div key={aIdx} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`correct-answer-${index}`}
+                    checked={answer.isCorrect}
+                    onChange={() => {
+                      const updated = editedAnswers.map((a, i) => ({
+                        ...a,
+                        isCorrect: i === aIdx
+                      }));
+                      setEditedAnswers(updated);
+                    }}
+                    className="w-4 h-4 cursor-pointer accent-green-500"
+                  />
+                  <Input
+                    value={answer.text}
+                    onChange={(e) => {
+                      const updated = [...editedAnswers];
+                      updated[aIdx] = { ...updated[aIdx], text: e.target.value };
+                      setEditedAnswers(updated);
+                    }}
+                    className="flex-1 bg-zinc-900 border-zinc-700 text-sm"
+                    placeholder={`Answer ${aIdx + 1}`}
+                  />
+                  {editedAnswers.length > 2 && (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setEditedAnswers(editedAnswers.filter((_, i) => i !== aIdx));
+                      }}
+                      size="sm"
+                      variant="destructive"
+                      className="text-white"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Add Answer Button */}
+            {editedAnswers.length < 6 && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setEditedAnswers([...editedAnswers, { text: '', isCorrect: false }]);
+                }}
+                size="sm"
+                variant="outline"
+                className="text-white w-full"
+              >
+                <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                Add Answer
+              </Button>
+            )}
+          </div>
+
+          {/* Save Button */}
+          <Button
+            type="button"
+            onClick={handleSaveEdit}
+            className="w-full text-white bg-green-600 hover:bg-green-700"
+            size="sm"
+          >
+            <FontAwesomeIcon icon={faSave} className="mr-2" />
+            Save Changes
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const { t, i18n } = useTranslation();
@@ -87,10 +450,17 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(10);
 
+  // Access codes pagination and filter state
+  const [codesPerPage, setCodesPerPage] = useState(10);
+  const [currentCodesPage, setCurrentCodesPage] = useState(1);
+  const [codeFilter, setCodeFilter] = useState('all'); // 'all', 'available', 'used'
+
   // Question builder state
   const [showQuestionBuilder, setShowQuestionBuilder] = useState(false);
   const [questionText, setQuestionText] = useState('');
   const [questionAnswers, setQuestionAnswers] = useState([{ text: '', isCorrect: false }]);
+  const [expandedQuestion, setExpandedQuestion] = useState(null); // Track which question is expanded
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState(null); // Track which question is being edited
 
   useEffect(() => {
     i18n.changeLanguage('en');
@@ -636,6 +1006,12 @@ const AdminDashboard = () => {
         order_index: miniLessons.length
       });
     }
+    // Reset question builder state
+    setShowQuestionBuilder(false);
+    setExpandedQuestion(null);
+    setQuestionText('');
+    setQuestionAnswers([{ text: '', isCorrect: false }]);
+    
     setShowMiniLessonModal(true);
   };
 
@@ -709,8 +1085,110 @@ const AdminDashboard = () => {
     });
   };
 
+  // Drag and Drop for Mini Lessons
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const oldIndex = miniLessons.findIndex((ml) => ml.id === active.id);
+      const newIndex = miniLessons.findIndex((ml) => ml.id === over.id);
+
+      const reorderedMiniLessons = arrayMove(miniLessons, oldIndex, newIndex);
+      setMiniLessons(reorderedMiniLessons);
+
+      // Update order_index in database
+      try {
+        const updates = reorderedMiniLessons.map((ml, index) => ({
+          id: ml.id,
+          order_index: index
+        }));
+
+        for (const update of updates) {
+          await supabase
+            .from('mini_lessons')
+            .update({ order_index: update.order_index })
+            .eq('id', update.id);
+        }
+
+        // Silent update - no notification needed for drag-and-drop reordering
+      } catch (error) {
+        setToast({ message: 'Error updating order: ' + error.message, type: 'error' });
+        await fetchMiniLessons(selectedLesson);
+      }
+    }
+  };
+
+  // Drag and Drop for Answer Choices
+  const handleAnswerDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const activeIndex = parseInt(active.id.replace('answer-', ''));
+      const overIndex = parseInt(over.id.replace('answer-', ''));
+
+      const reorderedAnswers = arrayMove(questionAnswers, activeIndex, overIndex);
+      setQuestionAnswers(reorderedAnswers);
+    }
+  };
+
+  // Handle question reordering
+  const handleQuestionDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeIndex = parseInt(active.id.replace('question-', ''));
+    const overIndex = parseInt(over.id.replace('question-', ''));
+
+    // Extract all questions
+    const questionMatches = miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || [];
+    
+    // Reorder questions
+    const reorderedQuestions = arrayMove(questionMatches, activeIndex, overIndex);
+    
+    // Rebuild content_html with reordered questions
+    let newContent = miniLessonForm.content_html;
+    questionMatches.forEach(q => {
+      newContent = newContent.replace(q, '');
+    });
+    
+    // Clean up multiple newlines
+    newContent = newContent.replace(/\n{3,}/g, '\n\n');
+    
+    // Add reordered questions at the end
+    reorderedQuestions.forEach(q => {
+      newContent += q;
+    });
+    
+    setMiniLessonForm({...miniLessonForm, content_html: newContent});
+  };
+
+  // Update a specific question
+  const updateQuestion = (questionIndex, updatedQuestionData) => {
+    const questionMatches = miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || [];
+    
+    if (questionIndex < 0 || questionIndex >= questionMatches.length) return;
+
+    const oldQuestionTag = questionMatches[questionIndex];
+    const newQuestionTag = `[QUESTION]${JSON.stringify(updatedQuestionData)}[/QUESTION]`;
+    
+    const newContent = miniLessonForm.content_html.replace(oldQuestionTag, newQuestionTag);
+    setMiniLessonForm({...miniLessonForm, content_html: newContent});
+    setToast({ message: 'Question updated successfully!', type: 'success' });
+  };
+
   // Question Builder Functions
   const addAnswer = () => {
+    if (questionAnswers.length >= 6) {
+      setToast({ message: 'Maximum 6 answer choices allowed per question', type: 'error' });
+      return;
+    }
     setQuestionAnswers([...questionAnswers, { text: '', isCorrect: false }]);
   };
 
@@ -740,7 +1218,14 @@ const AdminDashboard = () => {
       return;
     }
 
-    const validAnswers = questionAnswers.filter(a => a.text.trim());
+    // Check if already at max questions (20)
+    const existingQuestions = miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || [];
+    if (existingQuestions.length >= 20) {
+      setToast({ message: 'Maximum 20 questions allowed per lesson', type: 'error' });
+      return;
+    }
+
+    const validAnswers = questionAnswers.filter(a => a.text.trim()).slice(0, 6); // Max 6 answers
     if (validAnswers.length < 2) {
       setToast({ message: t('pleaseAddTwoAnswers'), type: 'error' });
       return;
@@ -771,6 +1256,7 @@ const AdminDashboard = () => {
     setQuestionText('');
     setQuestionAnswers([{ text: '', isCorrect: false }]);
     setShowQuestionBuilder(false);
+    setExpandedQuestion(null); // Close any expanded questions
     setToast({ message: t('questionAddedSuccessfully'), type: 'success' });
   };
 
@@ -843,7 +1329,7 @@ const AdminDashboard = () => {
             onClick={() => setActiveTab('analytics')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
               activeTab === 'analytics' 
-                ? 'bg-white text-black font-medium shadow-lg' 
+                ? 'bg-zinc-800 text-white font-medium border border-zinc-700' 
                 : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
             }`}
           >
@@ -860,13 +1346,13 @@ const AdminDashboard = () => {
             }}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
               activeTab === 'sections' 
-                ? 'bg-white text-black font-medium shadow-lg' 
+                ? 'bg-zinc-800 text-white font-medium border border-zinc-700' 
                 : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
             }`}
           >
             <FontAwesomeIcon icon={faBook} className="text-base" />
             <span className="flex-1 text-left">Sections</span>
-            <Badge variant="secondary" className={`text-xs ${activeTab === 'sections' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'sections' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 text-zinc-100'}`}>
               {sections.length}
             </Badge>
           </button>
@@ -875,13 +1361,13 @@ const AdminDashboard = () => {
             onClick={() => setActiveTab('users')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
               activeTab === 'users' 
-                ? 'bg-white text-black font-medium shadow-lg' 
+                ? 'bg-zinc-800 text-white font-medium border border-zinc-700' 
                 : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
             }`}
           >
             <FontAwesomeIcon icon={faUsers} className="text-base" />
             <span className="flex-1 text-left">Users</span>
-            <Badge variant="secondary" className={`text-xs ${activeTab === 'users' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'users' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 text-zinc-100'}`}>
               {users.length}
             </Badge>
           </button>
@@ -890,13 +1376,13 @@ const AdminDashboard = () => {
             onClick={() => setActiveTab('codes')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition text-sm ${
               activeTab === 'codes' 
-                ? 'bg-white text-black font-medium shadow-lg' 
+                ? 'bg-zinc-800 text-white font-medium border border-zinc-700' 
                 : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
             }`}
           >
             <FontAwesomeIcon icon={faKey} className="text-base" />
             <span className="flex-1 text-left">Access Codes</span>
-            <Badge variant="secondary" className={`text-xs ${activeTab === 'codes' ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-100'}`}>
+            <Badge variant="secondary" className={`text-xs ${activeTab === 'codes' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 text-zinc-100'}`}>
               {accessCodes.length}
             </Badge>
           </button>
@@ -1000,7 +1486,7 @@ const AdminDashboard = () => {
                                       setSelectedCourse(course.id);
                                       fetchLessons(course.id);
                                     }}
-                                    className="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
+                                    className="text-[#c96f49] hover:text-[#d98963] text-sm font-medium transition"
                                   >
                                     View Lessons →
                                   </button>
@@ -1055,7 +1541,7 @@ const AdminDashboard = () => {
                                   setSelectedCourse(course.id);
                                   fetchLessons(course.id);
                                 }}
-                                className="text-blue-400 hover:text-blue-300 text-sm font-medium mt-2 transition"
+                                className="text-[#c96f49] hover:text-[#d98963] text-sm font-medium mt-2 transition"
                               >
                                 View Lessons →
                               </button>
@@ -1106,7 +1592,7 @@ const AdminDashboard = () => {
               </div>
               <button
                 onClick={() => openLessonModal()}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition font-medium"
+                className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg transition font-medium"
               >
                 <FontAwesomeIcon icon={faPlus} />
                 Add Lesson
@@ -1132,7 +1618,7 @@ const AdminDashboard = () => {
                           setSelectedLesson(lesson.id);
                           fetchMiniLessons(lesson.id);
                         }}
-                        className="text-blue-400 hover:text-blue-300 text-sm"
+                        className="text-[#c96f49] hover:text-[#d98963] text-sm"
                       >
                         View Mini-Lessons →
                       </button>
@@ -1175,49 +1661,34 @@ const AdminDashboard = () => {
               </div>
               <button
                 onClick={() => openMiniLessonModal()}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition font-medium"
+                className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg transition font-medium"
               >
                 <FontAwesomeIcon icon={faPlus} />
                 Add Mini-Lesson
               </button>
             </div>
 
-            <div className="grid gap-4">
-              {miniLessons.map((miniLesson) => (
-                <div key={miniLesson.id} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-1">
-                        {miniLesson.title_en} / {miniLesson.title_ar}
-                      </h3>
-                      {miniLesson.video_url && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                          <FontAwesomeIcon icon={faVideo} />
-                          <span>Has video</span>
-                        </div>
-                      )}
-                      {miniLesson.content_html && (
-                        <p className="text-sm text-gray-400">Has HTML content</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openMiniLessonModal(miniLesson)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        onClick={() => deleteMiniLesson(miniLesson.id)}
-                        className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition border border-zinc-600"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
-                  </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={miniLessons.map(ml => ml.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="grid gap-4">
+                  {miniLessons.map((miniLesson) => (
+                    <SortableMiniLesson
+                      key={miniLesson.id}
+                      miniLesson={miniLesson}
+                      onEdit={openMiniLessonModal}
+                      onDelete={deleteMiniLesson}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -1417,6 +1888,63 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Filter and Pagination Controls */}
+            <div className="flex justify-between items-center gap-4">
+              {/* Filter Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant={codeFilter === 'all' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setCodeFilter('all');
+                    setCurrentCodesPage(1);
+                  }}
+                  className="text-white"
+                  size="sm"
+                >
+                  All Codes ({accessCodes.length})
+                </Button>
+                <Button
+                  variant={codeFilter === 'available' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setCodeFilter('available');
+                    setCurrentCodesPage(1);
+                  }}
+                  className="text-white"
+                  size="sm"
+                >
+                  Available ({accessCodes.filter(c => !c.used).length})
+                </Button>
+                <Button
+                  variant={codeFilter === 'used' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setCodeFilter('used');
+                    setCurrentCodesPage(1);
+                  }}
+                  className="text-white"
+                  size="sm"
+                >
+                  Used ({accessCodes.filter(c => c.used).length})
+                </Button>
+              </div>
+
+              {/* Codes Per Page Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-400">Per page:</span>
+                <select
+                  value={codesPerPage}
+                  onChange={(e) => {
+                    setCodesPerPage(Number(e.target.value));
+                    setCurrentCodesPage(1);
+                  }}
+                  className="bg-zinc-800 text-white border border-zinc-700 rounded px-2 py-1 text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
             <Card>
               <CardContent className="p-0">
                 <Table>
@@ -1429,31 +1957,84 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {accessCodes.map((code) => {
-                      const usedByUser = users.find(u => u.id === code.used_by);
-                      return (
-                        <TableRow key={code.id}>
-                          <TableCell className="font-mono">{code.code}</TableCell>
-                          <TableCell>
-                            <Badge variant={code.used ? "destructive" : "default"}>
-                              {code.used ? 'Used' : 'Available'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {usedByUser ? (
-                              <span className="text-blue-400 font-medium">User #{usedByUser.userNumber}</span>
-                            ) : (
-                              <span className="text-zinc-500">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-zinc-400">{new Date(code.created_at).toLocaleDateString()}</TableCell>
+                    {(() => {
+                      // Filter codes
+                      const filteredCodes = accessCodes.filter(code => {
+                        if (codeFilter === 'available') return !code.used;
+                        if (codeFilter === 'used') return code.used;
+                        return true; // 'all'
+                      });
+
+                      // Paginate
+                      const indexOfLastCode = currentCodesPage * codesPerPage;
+                      const indexOfFirstCode = indexOfLastCode - codesPerPage;
+                      const currentCodes = filteredCodes.slice(indexOfFirstCode, indexOfLastCode);
+
+                      return currentCodes.map((code) => {
+                        const usedByUser = users.find(u => u.id === code.used_by);
+                        return (
+                          <TableRow key={code.id}>
+                            <TableCell className="font-mono">{code.code}</TableCell>
+                            <TableCell>
+                              <Badge variant={code.used ? "destructive" : "default"}>
+                                {code.used ? 'Used' : 'Available'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {usedByUser ? (
+                                <span className="text-[#c96f49] font-medium">User #{usedByUser.userNumber}</span>
+                              ) : (
+                                <span className="text-zinc-500">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-zinc-400">{new Date(code.created_at).toLocaleDateString()}</TableCell>
                         </TableRow>
                       );
-                    })}
+                    });
+                    })()}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Pagination Controls */}
+            {(() => {
+              const filteredCodes = accessCodes.filter(code => {
+                if (codeFilter === 'available') return !code.used;
+                if (codeFilter === 'used') return code.used;
+                return true;
+              });
+              
+              const totalPages = Math.ceil(filteredCodes.length / codesPerPage);
+              
+              if (totalPages <= 1) return null;
+
+              return (
+                <div className="flex justify-center gap-2">
+                  <Button
+                    onClick={() => setCurrentCodesPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentCodesPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="text-white"
+                  >
+                    Previous
+                  </Button>
+                  <span className="flex items-center px-4 text-sm text-zinc-400">
+                    Page {currentCodesPage} of {totalPages}
+                  </span>
+                  <Button
+                    onClick={() => setCurrentCodesPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentCodesPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                    className="text-white"
+                  >
+                    Next
+                  </Button>
+                </div>
+              );
+            })()}
           </div>
         )}
         </div>
@@ -1659,37 +2240,48 @@ const AdminDashboard = () => {
               </Card>
               
               {/* Upload from Computer */}
-              <Card className="bg-zinc-900/50">
-                <CardContent className="pt-4 space-y-3">
-                  <Label htmlFor="video-upload" className="text-sm text-zinc-400">
-                    <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                    Upload Video (Any format - automatically converts for universal compatibility)
-                  </Label>
-                  <input
-                    id="video-upload"
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoFileChange}
-                    disabled={uploadingVideo}
-                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-zinc-900 hover:file:bg-zinc-100 file:cursor-pointer"
-                  />
-                  {uploadingVideo && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-blue-400">
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                        <span>Processing... {uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardContent className="pt-6 pb-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                      <FontAwesomeIcon icon={faVideo} />
+                      <span>Upload video from computer</span>
                     </div>
-                  )}
-                  <p className="text-xs text-zinc-500">
-                   Upload G!
-                  </p>
+                    
+                    <label
+                      htmlFor="video-upload"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 rounded-lg text-zinc-100 text-sm font-medium transition-all cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faVideo} />
+                      <span>Choose File</span>
+                    </label>
+                    <input
+                      id="video-upload"
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoFileChange}
+                      disabled={uploadingVideo}
+                      className="hidden"
+                    />
+                    
+                    {uploadingVideo && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center gap-2 text-sm text-[#c96f49]">
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                          <span>Processing... {uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-[#c96f49] h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-zinc-500">
+                      Upload G!
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1864,34 +2456,45 @@ const AdminDashboard = () => {
             <div className="space-y-3">
               <Label className="text-base">Video (Optional)</Label>
               
-              <Card className="bg-zinc-900/50">
-                <CardContent className="pt-4 space-y-3">
-                  <Label htmlFor="mini-video-upload" className="text-sm text-zinc-400">
-                    <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                    Upload Video (Any format - automatically converts for universal compatibility)
-                  </Label>
-                  <input
-                    id="mini-video-upload"
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoFileChange}
-                    disabled={uploadingVideo}
-                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-zinc-900 hover:file:bg-zinc-100 file:cursor-pointer"
-                  />
-                  {uploadingVideo && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-blue-400">
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                        <span>Processing... {uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardContent className="pt-6 pb-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                      <FontAwesomeIcon icon={faVideo} />
+                      <span>Upload video from computer</span>
                     </div>
-                  )}
+                    
+                    <label
+                      htmlFor="mini-video-upload"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 rounded-lg text-zinc-100 text-sm font-medium transition-all cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faVideo} />
+                      <span>Choose File</span>
+                    </label>
+                    <input
+                      id="mini-video-upload"
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoFileChange}
+                      disabled={uploadingVideo}
+                      className="hidden"
+                    />
+                    
+                    {uploadingVideo && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center gap-2 text-sm text-[#c96f49]">
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                          <span>Processing... {uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-[#c96f49] h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1916,16 +2519,104 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Question Builder Section */}
+            {/* Add Content Section - Separated */}
             <div className="space-y-3 border border-zinc-800 rounded-lg p-4 bg-zinc-900/30">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">{t('questionBuilder')}</Label>
+                <Label className="text-sm font-medium">Add Content</Label>
+              </div>
+              <Textarea
+                id="mini-content"
+                value={(() => {
+                  // Display only text content without [QUESTION] tags
+                  let displayContent = miniLessonForm.content_html;
+                  const questionMatches = displayContent.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g);
+                  if (questionMatches) {
+                    questionMatches.forEach((q) => {
+                      displayContent = displayContent.replace(q, '');
+                    });
+                  }
+                  return displayContent;
+                })()}
+                onChange={(e) => {
+                  // Store text content separately from questions
+                  let value = e.target.value;
+                  
+                  // Get existing questions
+                  const questionMatches = miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || [];
+                  
+                  // Combine text content with questions
+                  let newContent = value;
+                  questionMatches.forEach(q => {
+                    newContent += q;
+                  });
+                  
+                  setMiniLessonForm({...miniLessonForm, content_html: newContent});
+                }}
+                rows={6}
+                placeholder="What are you thinking..."
+                className="font-mono text-sm whitespace-pre-wrap bg-zinc-950 border-zinc-800"
+              />
+            </div>
+
+            {/* Questions Display Section - Separate Container */}
+            {miniLessonForm.content_html && miniLessonForm.content_html.includes('[QUESTION]') && (
+              <div className="space-y-3 border border-zinc-800 rounded-lg p-4 bg-zinc-900/30">
+                <Label className="text-xs text-zinc-400">Questions Added (Max 20):</Label>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleQuestionDragEnd}
+                >
+                  <SortableContext
+                    items={
+                      (miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || [])
+                        .map((_, idx) => `question-${idx}`)
+                    }
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g)?.slice(0, 20).map((q, idx) => (
+                        <SortableQuestion
+                          key={`question-${idx}`}
+                          questionTag={q}
+                          index={idx}
+                          totalQuestions={miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g)?.length || 0}
+                          isExpanded={expandedQuestion === idx}
+                          onToggle={() => {
+                            // Close other questions when opening one
+                            setExpandedQuestion(expandedQuestion === idx ? null : idx);
+                          }}
+                          onUpdate={updateQuestion}
+                          onRemove={() => {
+                            const newContent = miniLessonForm.content_html.replace(q, '');
+                            setMiniLessonForm({...miniLessonForm, content_html: newContent});
+                            // Close expanded question if it was the one removed
+                            if (expandedQuestion === idx) {
+                              setExpandedQuestion(null);
+                            }
+                          }}
+                          t={t}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {/* Question Builder Section - Separated */}
+            <div className="space-y-3 border border-zinc-800 rounded-lg p-4 bg-zinc-900/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{t('questionBuilder')} (Max 20 questions)</Label>
                 {!showQuestionBuilder && (
                   <Button 
                     type="button" 
                     onClick={() => setShowQuestionBuilder(true)}
                     size="sm"
                     className="text-white"
+                    disabled={
+                      (miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || []).length >= 20
+                    }
                   >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
                     {t('addQuestion')}
@@ -1949,47 +2640,45 @@ const AdminDashboard = () => {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm">{t('answers')}</Label>
+                        <Label className="text-sm">{t('answers')} (Max 6)</Label>
                         <Button 
                           type="button" 
                           onClick={addAnswer}
                           size="sm"
                           variant="outline"
                           className="text-white"
+                          disabled={questionAnswers.length >= 6}
                         >
                           <FontAwesomeIcon icon={faPlus} className="mr-2" />
                           {t('addAnswer')}
                         </Button>
                       </div>
 
-                      {questionAnswers.map((answer, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="correct-answer"
-                            checked={answer.isCorrect}
-                            onChange={() => setCorrectAnswer(index)}
-                            className="w-4 h-4 cursor-pointer accent-green-500"
-                          />
-                          <Input
-                            value={answer.text}
-                            onChange={(e) => updateAnswer(index, e.target.value)}
-                            placeholder={`${t('answer')} ${index + 1}`}
-                            className="flex-1 text-sm"
-                          />
-                          {questionAnswers.length > 1 && (
-                            <Button
-                              type="button"
-                              onClick={() => removeAnswer(index)}
-                              size="sm"
-                              variant="destructive"
-                              className="text-white"
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleAnswerDragEnd}
+                      >
+                        <SortableContext
+                          items={questionAnswers.map((_, index) => `answer-${index}`)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-2">
+                            {questionAnswers.map((answer, index) => (
+                              <SortableAnswer
+                                key={`answer-${index}`}
+                                answer={answer}
+                                index={index}
+                                totalAnswers={questionAnswers.length}
+                                onUpdateText={(text) => updateAnswer(index, text)}
+                                onSetCorrect={() => setCorrectAnswer(index)}
+                                onRemove={() => removeAnswer(index)}
+                                t={t}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
                     </div>
 
                     <div className="flex gap-2">
@@ -1997,6 +2686,9 @@ const AdminDashboard = () => {
                         type="button"
                         onClick={insertQuestion}
                         className="flex-1 text-white"
+                        disabled={
+                          (miniLessonForm.content_html.match(/\[QUESTION\](.*?)\[\/QUESTION\]/g) || []).length >= 20
+                        }
                       >
                         {t('insertQuestion')}
                       </Button>
@@ -2016,36 +2708,6 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mini-content">Add Content</Label>
-              <Textarea
-                id="mini-content"
-                value={miniLessonForm.content_html}
-                onChange={(e) => {
-                  // Preserve spaces up to 5 consecutive spaces
-                  let value = e.target.value;
-                  // Replace more than 5 consecutive spaces with exactly 5 spaces
-                  value = value.replace(/ {6,}/g, '     ');
-                  // Replace more than 5 consecutive newlines with exactly 5 newlines
-                  value = value.replace(/\n{6,}/g, '\n\n\n\n\n');
-                  setMiniLessonForm({...miniLessonForm, content_html: value});
-                }}
-                rows={6}
-                placeholder="Add your content here... (Spaces and line breaks preserved up to 5)"
-                className="font-mono text-sm whitespace-pre-wrap"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mini-order">Order Index</Label>
-              <Input
-                id="mini-order"
-                type="number"
-                value={miniLessonForm.order_index}
-                onChange={(e) => setMiniLessonForm({...miniLessonForm, order_index: parseInt(e.target.value)})}
-              />
             </div>
           </div>
           <DialogFooter>

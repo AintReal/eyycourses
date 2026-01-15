@@ -10,7 +10,6 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <h1 className='pt-4 text-center'></h1>
       <AuthContextProvider>
         <RouterProvider router={router} />
       </AuthContextProvider>

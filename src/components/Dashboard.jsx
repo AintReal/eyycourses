@@ -117,7 +117,7 @@ const QuestionDisplay = ({ questions, t }) => {
                       checked={isSelected}
                       onChange={() => handleAnswerSelect(qIndex, aIndex)}
                       disabled={submitted}
-                      className="w-4 h-4 cursor-pointer accent-blue-500"
+                      className="w-4 h-4 cursor-pointer accent-[#c96f49]"
                     />
                     <span className="text-zinc-300 flex-1">{answer.text}</span>
                     {showValidation && (
@@ -547,7 +547,6 @@ const Dashboard = () => {
         }}
       />
       
-      {/* Hamburger Button - Only on mobile */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="md:hidden fixed top-4 ltr:left-4 rtl:right-4 z-50 bg-zinc-950 text-white p-3 rounded-lg border border-zinc-800 shadow-lg"
@@ -555,7 +554,6 @@ const Dashboard = () => {
         <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} />
       </button>
 
-      {/* Settings and Language Switcher - Top Right */}
       <div className="fixed top-4 ltr:right-4 rtl:left-4 z-50 flex items-center gap-3">
         <button
           onClick={() => setIsProfileModalOpen(true)}
@@ -567,7 +565,6 @@ const Dashboard = () => {
         <LanguageSwitcher />
       </div>
       
-      {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black/80 z-40 backdrop-blur-sm"
@@ -575,7 +572,6 @@ const Dashboard = () => {
         />
       )}
       
-      {/* Sidebar - Always visible on desktop (md+), sliding on mobile */}
       <div className={`
         w-80 md:w-[320px]
         md:bg-zinc-950 md:border-r md:border-zinc-800
@@ -594,20 +590,19 @@ const Dashboard = () => {
             <p className="text-zinc-500 text-sm truncate">{session?.user?.email}</p>
           </div>
 
-          {/* Course Navigation */}
-          <nav className="space-y-6 mb-6">{/* Render sections with courses */}
+          <nav className="space-y-6 mb-6">
           {sections.map(section => {
             const sectionCourses = courses.filter(c => c.section_id === section.id);
             if (sectionCourses.length === 0) return null;
             
             return (
               <div key={section.id} className="space-y-3">
-                {/* Section Header */}
+
                 <div className="text-xs font-semibold text-zinc-600 uppercase tracking-wider px-1">
                   {i18n.language === 'ar' ? section.title_ar : section.title_en}
                 </div>
                 
-                {/* Courses in this section */}
+
                 <div className="space-y-2">
                   {sectionCourses.map(course => (
                     <div key={course.id}>
@@ -628,7 +623,7 @@ const Dashboard = () => {
                       >
                         <div className="flex items-center gap-3 pointer-events-none">
                           {course.is_open ? (
-                            <FontAwesomeIcon icon={faPlay} className="text-blue-400 text-sm" />
+                            <FontAwesomeIcon icon={faPlay} className="text-[#c96f49] text-sm" />
                           ) : (
                             <FontAwesomeIcon icon={faLock} className="text-zinc-600 text-sm" />
                           )}
@@ -667,7 +662,7 @@ const Dashboard = () => {
                                   }}
                                   className={`w-full text-left px-3 py-2.5 rounded-md transition-all text-sm flex items-center justify-between ${
                                     selectedLesson?.id === lesson.id && !selectedMiniLesson
-                                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                      ? 'bg-[#c96f49] text-white shadow-lg shadow-[#c96f49]/20'
                                       : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
                                   }`}
                                 >
@@ -694,7 +689,7 @@ const Dashboard = () => {
                                         }}
                                         className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm ${
                                           selectedMiniLesson?.id === miniLesson.id
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                            ? 'bg-[#c96f49] text-white shadow-lg shadow-[#c96f49]/20'
                                             : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300'
                                         }`}
                                       >
@@ -744,7 +739,7 @@ const Dashboard = () => {
                     >
                       <div className="flex items-center gap-3 pointer-events-none">
                         {course.is_open ? (
-                          <FontAwesomeIcon icon={faPlay} className="text-blue-400 text-sm" />
+                          <FontAwesomeIcon icon={faPlay} className="text-[#c96f49] text-sm" />
                         ) : (
                           <FontAwesomeIcon icon={faLock} className="text-zinc-600 text-sm" />
                         )}
@@ -785,7 +780,7 @@ const Dashboard = () => {
                                 }}
                                 className={`w-full text-left px-3 py-2.5 rounded-md transition-all text-sm flex items-center justify-between ${
                                   selectedLesson?.id === lesson.id && !selectedMiniLesson
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                    ? 'bg-[#c96f49] text-white shadow-lg shadow-[#c96f49]/20'
                                     : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
                                 }`}
                               >
@@ -812,7 +807,7 @@ const Dashboard = () => {
                                       }}
                                       className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm ${
                                         selectedMiniLesson?.id === miniLesson.id
-                                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                          ? 'bg-[#c96f49] text-white shadow-lg shadow-[#c96f49]/20'
                                           : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300'
                                       }`}
                                     >
@@ -836,7 +831,6 @@ const Dashboard = () => {
         </nav>
         </div>
 
-        {/* Feedback Form & Sign Out Button - Sticky at bottom */}
         <div className="sticky bottom-0 bg-zinc-950 border-t border-zinc-800 p-6 space-y-5">
           {/* Feedback Form */}
           <div className="bg-zinc-900 rounded-lg p-5 border border-zinc-800">
@@ -951,28 +945,30 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               )}
-
-              {/* Lesson/Mini-Lesson Content Card */}
               {(selectedMiniLesson?.content_html || selectedLesson?.content_html) && (() => {
                 const rawContent = selectedMiniLesson?.content_html || selectedLesson.content_html;
                 const { content, questions } = parseContent(rawContent);
                 
+
+
+                const hasRealContent = content && content.trim().length > 0;
+                
                 return (
                   <>
-                    {content && (
+                    {hasRealContent && (
                       <Card className="bg-zinc-950 border-zinc-800">
                         <CardContent className="pt-6">
                           <div 
                             className="text-zinc-300 text-base prose prose-invert prose-zinc max-w-none whitespace-pre-wrap
                               prose-headings:text-zinc-100 prose-headings:font-bold
                               prose-p:text-zinc-300 prose-p:leading-relaxed
-                              prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+                              prose-a:text-[#c96f49] prose-a:no-underline hover:prose-a:underline
                               prose-strong:text-zinc-100 prose-strong:font-semibold
-                              prose-code:text-blue-400 prose-code:bg-zinc-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                              prose-code:text-[#c96f49] prose-code:bg-zinc-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
                               prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800
                               prose-ul:text-zinc-300 prose-ol:text-zinc-300
                               prose-li:text-zinc-300 prose-li:marker:text-zinc-500
-                              prose-blockquote:border-l-blue-500 prose-blockquote:text-zinc-400"
+                              prose-blockquote:border-l-[#c96f49] prose-blockquote:text-zinc-400"
                             dangerouslySetInnerHTML={{ 
                               __html: DOMPurify.sanitize(
                                 content, 

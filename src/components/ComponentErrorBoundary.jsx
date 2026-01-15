@@ -31,7 +31,7 @@ class ComponentErrorBoundary extends Component {
             </p>
             <button
               onClick={this.handleRetry}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all"
+              className="px-6 py-2 bg-[#c96f49] hover:bg-[#b85f39] text-white text-sm font-medium rounded-lg transition-all"
             >
               Try Again
             </button>

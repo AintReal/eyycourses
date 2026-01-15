@@ -258,7 +258,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('profile')}
               className={`flex-1 px-6 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 rounded-t-lg ${
                 activeTab === 'profile'
-                  ? 'text-white border-b-2 border-blue-500 bg-zinc-900'
+                  ? 'text-white border-b-2 border-[#c96f49] bg-zinc-900'
                   : 'text-zinc-400 hover:text-zinc-300 hover:bg-zinc-900/50'
               }`}
             >
@@ -269,7 +269,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('progress')}
               className={`flex-1 px-6 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 rounded-t-lg ${
                 activeTab === 'progress'
-                  ? 'text-white border-b-2 border-blue-500 bg-zinc-900'
+                  ? 'text-white border-b-2 border-[#c96f49] bg-zinc-900'
                   : 'text-zinc-400 hover:text-zinc-300 hover:bg-zinc-900/50'
               }`}
             >

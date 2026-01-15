@@ -9,6 +9,9 @@ import AdminDashboard from "./components/AdminDashboard"
 import ErrorBoundary from "./components/ErrorBoundary"
 import DashboardErrorBoundary from "./components/DashboardErrorBoundary"
 import AdminErrorBoundary from "./components/AdminErrorBoundary"
+import TelrPayment from "./components/TelrPayment"
+import PaymentSuccess from "./components/PaymentSuccess"
+import PaymentFailed from "./components/PaymentFailed"
 
 export const router = createBrowserRouter([
     {
@@ -40,5 +43,27 @@ export const router = createBrowserRouter([
                 </PrivateRouter>
             </DashboardErrorBoundary>
         )
+    },
+    {
+        path: "/pricing", 
+        element: (
+            <ErrorBoundary>
+                <PrivateRouter>
+                    <TelrPayment />
+                </PrivateRouter>
+            </ErrorBoundary>
+        )
+    },
+    {
+        path: "/payment-success", 
+        element: <ErrorBoundary><PaymentSuccess /></ErrorBoundary>
+    },
+    {
+        path: "/payment-failed", 
+        element: <ErrorBoundary><PaymentFailed /></ErrorBoundary>
+    },
+    {
+        path: "/payment-cancelled", 
+        element: <ErrorBoundary><PaymentFailed /></ErrorBoundary>
     }
 ])

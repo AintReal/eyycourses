@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faSpinner, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import LoadingLogo from './LoadingLogo';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -115,127 +114,177 @@ const AdminLogin = () => {
   const isLocked = lockoutTime && Date.now() < lockoutTime;
 
   return (
-    <div className="min-h-screen h-screen bg-zinc-900 flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background Decorations */}
-      <div 
-        className="absolute top-0 left-0 w-96 h-96 opacity-60" 
+    <div className="min-h-screen h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
+      
+      {/* Dashed Bottom Left Fade Grid */}
+      <div
+        className="absolute inset-0 z-0"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+            linear-gradient(to right, #27272a 1px, transparent 1px),
+            linear-gradient(to bottom, #27272a 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at top left, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(-12deg)',
-          transformOrigin: 'top left'
-        }}
-      ></div>
-
-      <div 
-        className="absolute top-0 right-0 w-96 h-96 opacity-60" 
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+          backgroundSize: "20px 20px",
+          backgroundPosition: "0 0, 0 0",
+          maskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
           `,
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-          WebkitMaskImage: 'radial-gradient(circle at top right, black 0%, black 30%, transparent 65%)',
-          transform: 'rotate(12deg)',
-          transformOrigin: 'top right'
+          WebkitMaskImage: `
+            repeating-linear-gradient(
+              to right,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            repeating-linear-gradient(
+              to bottom,
+              black 0px,
+              black 3px,
+              transparent 3px,
+              transparent 8px
+            ),
+            radial-gradient(ellipse 80% 80% at 0% 100%, #000 50%, transparent 90%)
+          `,
+          maskComposite: "intersect",
+          WebkitMaskComposite: "source-in",
         }}
-      ></div>
-
-      {/* Login Card */}
-      <div className="relative bg-zinc-800/50 backdrop-blur-xl border border-zinc-700/50 rounded-2xl p-8 w-full max-w-md shadow-2xl">
+      />
+      
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo and Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-gray-400 text-sm">Secure authentication required</p>
+          <div className="inline-block mb-6">
+            <img 
+              src="/croppedlogo.png" 
+              alt="eyycourses" 
+              className="h-24 w-auto mx-auto"
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Admin Panel</h1>
+          <p className="text-sm text-zinc-400">Secure authentication required</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          {/* Email Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
-              <FontAwesomeIcon icon={faEnvelope} className="text-gray-500 text-sm" />
+        {/* Card */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 backdrop-blur-sm p-8 shadow-2xl">
+          
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label htmlFor="adminEmail" className="block text-sm font-medium text-zinc-200">
+                Admin Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FontAwesomeIcon icon={faEnvelope} className="text-zinc-500 text-sm" />
+                </div>
+                <input 
+                  className="w-full pl-10 pr-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="email"
+                  name="email"
+                  id="adminEmail" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  required
+                  disabled={isLocked}
+                />
+              </div>
             </div>
-            <input
-              type="email"
-              placeholder="Admin Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLocked}
-              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 ltr:pl-11 rtl:pr-11
-                       focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20
-                       disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            />
-          </div>
 
-          {/* Password Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 ltr:left-0 rtl:right-0 ltr:pl-4 rtl:pr-4 flex items-center pointer-events-none">
-              <FontAwesomeIcon icon={faLock} className="text-gray-500 text-sm" />
+            {/* Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="adminPassword" className="block text-sm font-medium text-zinc-200">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FontAwesomeIcon icon={faLock} className="text-zinc-500 text-sm" />
+                </div>
+                <input 
+                  className="w-full pl-10 pr-12 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  id="adminPassword"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••"
+                  required
+                  disabled={isLocked}
+                />
+                <div
+                  onClick={() => !isLocked && setShowPassword(!showPassword)}
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
+                </div>
+              </div>
             </div>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLocked}
-              className="w-full bg-zinc-900/50 border border-zinc-700 text-white rounded-xl px-4 py-3 ltr:pl-11 rtl:pr-11 ltr:pr-12 rtl:pl-12
-                       focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20
-                       disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            />
-            <div
-              onClick={() => !isLocked && setShowPassword(!showPassword)}
-              className={`absolute inset-y-0 ltr:right-0 rtl:left-0 ltr:pr-4 rtl:pl-4 flex items-center text-gray-500 hover:text-gray-300 transition-colors ${
-                isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-              }`}
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
-            </div>
-          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Attempt Counter */}
-          {loginAttempts > 0 && !isLocked && (
-            <div className="text-yellow-400 text-xs text-center">
-              Failed attempts: {loginAttempts}/5
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading || isLocked}
-            className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-semibold py-3 px-4 rounded-xl 
-                     transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed 
-                     flex items-center justify-center gap-2 border border-zinc-600"
-          >
-            {loading ? (
-              <>
-                <LoadingLogo size="sm" />
-                Authenticating...
-              </>
-            ) : (
-              'Sign In as Admin'
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3">
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              </div>
             )}
-          </button>
-        </form>
 
-        {/* Security Notice */}
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>This area is protected</p>
-          <p className="mt-1">Admin access only • All attempts are logged</p>
+            {/* Attempt Counter */}
+            {loginAttempts > 0 && !isLocked && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-md p-3">
+                <p className="text-yellow-400 text-sm text-center">
+                  Failed attempts: {loginAttempts}/5
+                </p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button 
+              className="w-full py-2.5 bg-white hover:bg-zinc-100 text-white font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-6"
+              type="submit"
+              disabled={loading || isLocked}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                  Authenticating...
+                </span>
+              ) : (
+                <span>Sign In as Admin</span>
+              )}
+            </button>
+
+          </form>
+
+          {/* Security Notice */}
+          <div className="mt-6 pt-6 border-t border-zinc-800">
+            <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <p>Protected Area • All attempts are logged</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-zinc-500 text-xs">
+            © 2026 eyycourses · All Rights Reserved
+          </p>
         </div>
       </div>
     </div>

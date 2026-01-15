@@ -34,13 +34,13 @@ const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
 
   return (
     <div 
-      className={`fixed top-4 right-4 z-50 transition-all duration-300 ease-out ${
+      className={`fixed top-4 right-4 z-[9999] transition-all duration-300 ease-out ${
         isExiting 
           ? 'opacity-0 -translate-y-5' 
           : 'opacity-100 translate-y-0 animate-slideIn'
       }`}
     >
-      <div className="bg-zinc-800/95 backdrop-blur-xl border border-zinc-700 rounded-lg px-4 py-3 shadow-2xl flex items-center gap-3 min-w-75 max-w-md">
+      <div className="bg-zinc-800 backdrop-blur-xl border border-zinc-700 rounded-lg px-4 py-3 shadow-2xl flex items-center gap-3 min-w-75 max-w-md">
         <FontAwesomeIcon icon={style.icon} className="text-zinc-400 text-lg" />
         <p className="text-white flex-1 text-sm">{message}</p>
         <button
